@@ -3,6 +3,7 @@ const cors = require('cors');
 const errorHandler = require('./middlewares/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const bookingsRoutes = require('./routes/bookingsRoutes');
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.get('/health', (req, res) => {
 
 app.use('/auth', authRoutes);
 app.use('/settings', settingsRoutes);
+app.use('/bookings', bookingsRoutes);
 
 app.use(errorHandler);
 
