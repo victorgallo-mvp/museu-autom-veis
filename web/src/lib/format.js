@@ -10,3 +10,11 @@ export function formatCurrency(value) {
 export function formatDateTime(date) {
   return format(new Date(date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
 }
+
+export function toDatetimeLocal(date) {
+  return format(new Date(date), "yyyy-MM-dd'T'HH:mm");
+}
+
+export function round2(value) {
+  return Math.round(value * 100) / 100;
+}
