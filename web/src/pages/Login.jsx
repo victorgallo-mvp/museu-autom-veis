@@ -16,8 +16,12 @@ export default function Login() {
     try {
       await login(email, password);
       navigate('/dashboard');
-    } catch {
-      toast.error('Email ou senha invalidos');
+    } catch (err) {
+      if (err.response?.status === 401) {
+        toast.error('Email ou senha invalidos');
+      } else {
+        toast.error('Erro ao conectar com o servidor. Tente novamente em instantes.');
+      }
     } finally {
       setSubmitting(false);
     }
