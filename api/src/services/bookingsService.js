@@ -1,17 +1,16 @@
 const prisma = require('../lib/prisma');
 const AppError = require('../lib/AppError');
 const settingsService = require('./settingsService');
-
-function round2(value) {
-  return Math.round(value * 100) / 100;
-}
+const { calcBookingTotals } = require('../lib/money');
 
 function serialize(booking) {
   const ticketPriceSnapshot = Number(booking.ticketPriceSnapshot);
   const guideCommissionSnapshot = Number(booking.guideCommissionSnapshot);
-  const total = round2(booking.peopleCount * ticketPriceSnapshot);
-  const guideCommissionTotal = round2(booking.peopleCount * guideCommissionSnapshot);
-  const ownerShareTotal = round2(total - guideCommissionTotal);
+  const { total, guideCommissionTotal, ownerShareTotal } = calcBookingTotals(
+    booking.peopleCount,
+    ticketPriceSnapshot,
+    guideCommissionSnapshot
+  );
 
   return {
     id: booking.id,
@@ -136,4 +135,5 @@ module.exports = {
   updateBooking,
   updateBookingStatus,
   deleteBooking,
+  serializeBooking: serialize,
 };
