@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Setting {
+  id                       Int      @id @default(1)
+  ticketPrice              Decimal  @default(60.00) @db.Decimal(10, 2)
+  guideCommissionPerPerson Decimal  @default(15.00) @db.Decimal(10, 2)
+  updatedAt                DateTime @updatedAt
+}
+
+model Booking {
+  id                      String        @id @default(uuid())
+  groupName               String
+  responsibleName         String
+  responsiblePhone        String
+  scheduledAt             DateTime
+  peopleCount             Int
+  ticketPriceSnapshot     Decimal       @db.Decimal(10, 2)
+  guideCommissionSnapshot Decimal       @db.Decimal(10, 2)
+  status                  BookingStatus @default(PENDING)
+  notes                   String?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+enum BookingStatus {
+  PENDING
+  PAID
+  CANCELED
+  NO_SHOW
+}
+
+// Fase 2: schema ja preparado, sem UI nesta fase
+model Product {
+  id              String        @id @default(uuid())
+  name            String
+  price           Decimal       @db.Decimal(10, 2)
+  guideCommission Decimal       @db.Decimal(10, 2)
+  stock           Int           @default(0)
+  active          Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  sales           ProductSale[]
+}
+
+model ProductSale {
+  id                      String   @id @default(uuid())
+  productId               String
+  product                 Product  @relation(fields: [productId], references: [id])
+  quantity                Int
+  unitPriceSnapshot       Decimal  @db.Decimal(10, 2)
+  guideCommissionSnapshot Decimal  @db.Decimal(10, 2)
+  soldAt                  DateTime @default(now())
+  createdAt               DateTime @default(now())
+}
