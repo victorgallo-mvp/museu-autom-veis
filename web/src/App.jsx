@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Bookings from './pages/Bookings';
 import BookingForm from './pages/BookingForm';
+import Settings from './pages/Settings';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 
@@ -16,6 +17,7 @@ function App() {
           <Route path="/bookings" element={<Bookings />} />
           <Route path="/bookings/new" element={<BookingForm />} />
           <Route path="/bookings/:id/edit" element={<BookingForm />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
