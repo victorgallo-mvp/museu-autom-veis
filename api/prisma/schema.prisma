@@ -46,6 +46,29 @@ enum BookingStatus {
   NO_SHOW
 }
 
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  amount      Decimal  @db.Decimal(10, 2)
+  paidAt      DateTime
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([paidAt])
+}
+
+model Payout {
+  id        String   @id @default(uuid())
+  amount    Decimal  @db.Decimal(10, 2)
+  paidAt    DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([paidAt])
+}
+
 // Fase 2: schema ja preparado, sem UI nesta fase
 model Product {
   id              String        @id @default(uuid())
