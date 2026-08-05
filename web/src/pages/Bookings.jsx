@@ -187,7 +187,15 @@ export default function Bookings() {
                   </td>
                   <td className="px-4 py-3 text-text-primary">{booking.groupName}</td>
                   <td className="px-4 py-3 text-text-secondary">{booking.responsibleName}</td>
-                  <td className="px-4 py-3 text-text-primary text-right">{booking.peopleCount}</td>
+                  <td className="px-4 py-3 text-text-primary text-right">
+                    {booking.expectedPeopleCount}
+                    {booking.actualPeopleCount !== null &&
+                      booking.actualPeopleCount !== booking.expectedPeopleCount && (
+                        <span className="text-text-secondary text-xs block">
+                          real: {booking.actualPeopleCount}
+                        </span>
+                      )}
+                  </td>
                   <td className="px-4 py-3 text-text-primary text-right whitespace-nowrap">
                     {formatCurrency(booking.total)}
                   </td>

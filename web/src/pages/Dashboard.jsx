@@ -9,7 +9,16 @@ import {
   endOfMonth,
   subMonths,
 } from 'date-fns';
-import { Users, Wallet, HandCoins, Landmark, Clock3 } from 'lucide-react';
+import {
+  Users,
+  Wallet,
+  HandCoins,
+  Landmark,
+  Clock3,
+  MapPinned,
+  ClipboardCheck,
+  Wine,
+} from 'lucide-react';
 import api from '../lib/api';
 import { formatCurrency, formatDateTime } from '../lib/format';
 import { StatusBadge } from '../components/StatusBadge';
@@ -109,7 +118,7 @@ function BookingList({ title, bookings, emptyLabel }) {
               <div>
                 <p className="text-text-primary text-sm font-medium">{booking.groupName}</p>
                 <p className="text-text-secondary text-xs">
-                  {formatDateTime(booking.scheduledAt)} - {booking.peopleCount} pessoas
+                  {formatDateTime(booking.scheduledAt)} - {booking.expectedPeopleCount} pessoas
                 </p>
               </div>
               <StatusBadge status={booking.status} />
@@ -118,6 +127,12 @@ function BookingList({ title, bookings, emptyLabel }) {
         </ul>
       )}
     </div>
+  );
+}
+
+function SectionHeading({ children }) {
+  return (
+    <h2 className="font-display text-xl text-text-primary mb-4 mt-10 first:mt-0">{children}</h2>
   );
 }
 
@@ -154,44 +169,76 @@ export default function Dashboard() {
 
       {data && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <StatCard icon={Users} label="Visitas pagas" value={data.counts.paid} />
-            <StatCard icon={Wallet} label="Receita" value={formatCurrency(data.totals.revenue)} />
+          <SectionHeading>Visitas</SectionHeading>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <StatCard icon={MapPinned} label="Total de visitas" value={data.visits.counts.visitCount} />
+            <StatCard icon={Users} label="Visitas pagas" value={data.visits.counts.paid} />
+            <StatCard icon={Wallet} label="Receita" value={formatCurrency(data.visits.totals.revenue)} />
             <StatCard
               icon={HandCoins}
               label="Comissao do guia"
-              value={formatCurrency(data.totals.guideCommission)}
+              value={formatCurrency(data.visits.totals.guideCommission)}
             />
             <StatCard
               icon={Landmark}
               label="Repasse ao dono"
-              value={formatCurrency(data.totals.ownerShare)}
+              value={formatCurrency(data.visits.totals.ownerShare)}
             />
+          </div>
+
+          <div className="bg-surface border border-border rounded-lg p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4 text-text-primary">
+              <ClipboardCheck size={18} />
+              <h3 className="font-display text-lg">Previsto x realizado</h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-text-secondary">Pessoas previstas</p>
+                <p className="text-text-primary text-lg">{data.visits.attendance.expected}</p>
+              </div>
+              <div>
+                <p className="text-text-secondary">Pessoas que compareceram</p>
+                <p className="text-text-primary text-lg">{data.visits.attendance.actual}</p>
+              </div>
+              <div>
+                <p className="text-text-secondary">Diferenca</p>
+                <p className="text-text-primary text-lg">
+                  {data.visits.attendance.actual - data.visits.attendance.expected}
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="bg-surface border border-border rounded-lg p-6 mb-8">
             <div className="flex items-center gap-2 mb-4 text-warning">
               <Clock3 size={18} />
-              <h2 className="font-display text-lg text-text-primary">Previsto (pendentes futuros)</h2>
+              <h3 className="font-display text-lg text-text-primary">
+                Previsto (pendentes futuros)
+              </h3>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
               <div>
                 <p className="text-text-secondary">Pessoas</p>
-                <p className="text-text-primary text-lg">{data.forecast.people}</p>
+                <p className="text-text-primary text-lg">{data.visits.forecast.people}</p>
               </div>
               <div>
                 <p className="text-text-secondary">Receita prevista</p>
-                <p className="text-text-primary text-lg">{formatCurrency(data.forecast.revenue)}</p>
+                <p className="text-text-primary text-lg">
+                  {formatCurrency(data.visits.forecast.revenue)}
+                </p>
               </div>
               <div>
                 <p className="text-text-secondary">Comissao prevista</p>
                 <p className="text-text-primary text-lg">
-                  {formatCurrency(data.forecast.guideCommission)}
+                  {formatCurrency(data.visits.forecast.guideCommission)}
                 </p>
               </div>
               <div>
                 <p className="text-text-secondary">Repasse previsto</p>
-                <p className="text-text-primary text-lg">{formatCurrency(data.forecast.ownerShare)}</p>
+                <p className="text-text-primary text-lg">
+                  {formatCurrency(data.visits.forecast.ownerShare)}
+                </p>
               </div>
             </div>
           </div>
@@ -199,13 +246,34 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <BookingList
               title="Proximas visitas (7 dias)"
-              bookings={data.upcoming}
+              bookings={data.visits.upcoming}
               emptyLabel="Nenhuma visita nos proximos 7 dias."
             />
             <BookingList
               title="Ultimas alteracoes"
-              bookings={data.recent}
+              bookings={data.visits.recent}
               emptyLabel="Nenhum agendamento ainda."
+            />
+          </div>
+
+          <SectionHeading>Cachacas</SectionHeading>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard icon={Wine} label="Garrafas vendidas" value={data.products.totals.bottles} />
+            <StatCard
+              icon={Wallet}
+              label="Receita"
+              value={formatCurrency(data.products.totals.revenue)}
+            />
+            <StatCard
+              icon={HandCoins}
+              label="Comissao"
+              value={formatCurrency(data.products.totals.commission)}
+            />
+            <StatCard
+              icon={Landmark}
+              label="Repasse ao dono"
+              value={formatCurrency(data.products.totals.ownerShare)}
             />
           </div>
         </>

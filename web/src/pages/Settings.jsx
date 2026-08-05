@@ -18,7 +18,12 @@ function Field({ label, children }) {
 
 export default function Settings() {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ ticketPrice: '', guideCommissionPerPerson: '' });
+  const [form, setForm] = useState({
+    ticketPrice: '',
+    guideCommissionPerPerson: '',
+    cachacaPrice: '',
+    cachacaCommission: '',
+  });
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
@@ -33,6 +38,8 @@ export default function Settings() {
       setForm({
         ticketPrice: settings.ticketPrice,
         guideCommissionPerPerson: settings.guideCommissionPerPerson,
+        cachacaPrice: settings.cachacaPrice,
+        cachacaCommission: settings.cachacaCommission,
       });
     }
   }, [settings]);
@@ -51,6 +58,8 @@ export default function Settings() {
     mutation.mutate({
       ticketPrice: Number(form.ticketPrice),
       guideCommissionPerPerson: Number(form.guideCommissionPerPerson),
+      cachacaPrice: Number(form.cachacaPrice),
+      cachacaCommission: Number(form.cachacaCommission),
     });
   }
 
@@ -61,8 +70,8 @@ export default function Settings() {
       <div className="flex items-start gap-3 bg-warning/10 border border-warning/30 rounded-lg p-4 mb-6">
         <AlertTriangle size={18} className="text-warning shrink-0 mt-0.5" />
         <p className="text-sm text-text-secondary">
-          Alteracoes aqui afetam apenas agendamentos criados dali em diante. Agendamentos ja
-          existentes mantem os valores gravados no momento em que foram criados.
+          Alteracoes aqui afetam apenas agendamentos e vendas criados dali em diante. Registros
+          ja existentes mantem os valores gravados no momento em que foram criados.
         </p>
       </div>
 
@@ -73,6 +82,10 @@ export default function Settings() {
           onSubmit={handleSubmit}
           className="bg-surface border border-border rounded-lg p-6 space-y-4"
         >
+          <h2 className="text-sm font-medium text-text-secondary uppercase tracking-wide">
+            Ingressos
+          </h2>
+
           <Field label="Preco do ingresso (R$ por pessoa)">
             <input
               required
@@ -95,6 +108,34 @@ export default function Settings() {
               onChange={(e) =>
                 setForm((f) => ({ ...f, guideCommissionPerPerson: e.target.value }))
               }
+              className={inputClass}
+            />
+          </Field>
+
+          <h2 className="text-sm font-medium text-text-secondary uppercase tracking-wide pt-2">
+            Cachaca
+          </h2>
+
+          <Field label="Preco da cachaca (R$ por garrafa)">
+            <input
+              required
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.cachacaPrice}
+              onChange={(e) => setForm((f) => ({ ...f, cachacaPrice: e.target.value }))}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="Comissao por venda (R$ por garrafa)">
+            <input
+              required
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.cachacaCommission}
+              onChange={(e) => setForm((f) => ({ ...f, cachacaCommission: e.target.value }))}
               className={inputClass}
             />
           </Field>

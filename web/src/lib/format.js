@@ -11,6 +11,14 @@ export function formatDateTime(date) {
   return format(new Date(date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
 }
 
+export function formatDate(date) {
+  return format(new Date(date), 'dd/MM/yyyy', { locale: ptBR });
+}
+
+export function formatWeekday(date) {
+  return format(new Date(date), 'EEEE', { locale: ptBR });
+}
+
 export function toDatetimeLocal(date) {
   return format(new Date(date), "yyyy-MM-dd'T'HH:mm");
 }

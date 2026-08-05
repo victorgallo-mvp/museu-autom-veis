@@ -1,12 +1,24 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Wallet, TrendingUp, Receipt, HandCoins, Plus, Pencil, Trash2 } from 'lucide-react';
+import {
+  Wallet,
+  Receipt,
+  HandCoins,
+  MapPinned,
+  Wine,
+  Plus,
+  Pencil,
+  Trash2,
+  ScrollText,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
 import { formatCurrency, formatDateTime } from '../lib/format';
 import { ExpenseModal } from '../components/ExpenseModal';
 import { PayoutModal } from '../components/PayoutModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { PAYOUT_CATEGORY_LABELS } from '../lib/payoutCategory';
 
 function StatCard({ icon: Icon, label, value, highlight }) {
   return (
@@ -112,34 +124,53 @@ export default function CashFlow() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl text-text-primary mb-8">Fluxo de Caixa</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <h1 className="font-display text-3xl text-text-primary">Fluxo de Caixa</h1>
+        <Link
+          to="/cashflow/history"
+          className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
+        >
+          <ScrollText size={16} />
+          Ver historico completo
+        </Link>
+      </div>
 
       {loadingSummary ? (
         <p className="text-text-secondary mb-8">Carregando...</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            icon={Wallet}
-            label="Saldo em caixa"
-            value={formatCurrency(summary.totals.balance)}
-            highlight
-          />
-          <StatCard
-            icon={TrendingUp}
-            label="Receita acumulada (dono)"
-            value={formatCurrency(summary.totals.ownerShareAccrued)}
-          />
-          <StatCard
-            icon={Receipt}
-            label="Despesas"
-            value={formatCurrency(summary.totals.expenses)}
-          />
-          <StatCard
-            icon={HandCoins}
-            label="Repassado ao dono"
-            value={formatCurrency(summary.totals.payouts)}
-          />
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <StatCard
+              icon={Wallet}
+              label="Saldo em caixa"
+              value={formatCurrency(summary.totals.balance)}
+              highlight
+            />
+            <StatCard
+              icon={Receipt}
+              label="Despesas"
+              value={formatCurrency(summary.totals.expenses)}
+            />
+            <StatCard
+              icon={HandCoins}
+              label="Repassado ao dono (total)"
+              value={formatCurrency(summary.totals.payouts)}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <StatCard
+              icon={MapPinned}
+              label="Pendente de visitas"
+              value={formatCurrency(summary.totals.visits.pending)}
+            />
+            <StatCard
+              icon={Wine}
+              label="Pendente de cachaca"
+              value={formatCurrency(summary.totals.products.pending)}
+            />
+          </div>
+        </>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -224,7 +255,9 @@ export default function CashFlow() {
                     <p className="text-text-primary text-sm font-medium">
                       {payout.notes || 'Repasse ao dono'}
                     </p>
-                    <p className="text-text-secondary text-xs">{formatDateTime(payout.paidAt)}</p>
+                    <p className="text-text-secondary text-xs">
+                      {formatDateTime(payout.paidAt)} - {PAYOUT_CATEGORY_LABELS[payout.category]}
+                    </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-text-primary text-sm whitespace-nowrap">

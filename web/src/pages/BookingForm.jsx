@@ -13,7 +13,8 @@ const EMPTY_FORM = {
   responsibleName: '',
   responsiblePhone: '',
   scheduledAt: '',
-  peopleCount: 1,
+  expectedPeopleCount: 1,
+  actualPeopleCount: '',
   notes: '',
   status: 'PENDING',
 };
@@ -64,7 +65,8 @@ export default function BookingForm() {
         responsibleName: booking.responsibleName,
         responsiblePhone: formatPhone(booking.responsiblePhone),
         scheduledAt: toDatetimeLocal(booking.scheduledAt),
-        peopleCount: booking.peopleCount,
+        expectedPeopleCount: booking.expectedPeopleCount,
+        actualPeopleCount: booking.actualPeopleCount ?? '',
         notes: booking.notes ?? '',
         status: booking.status,
       });
@@ -97,20 +99,36 @@ export default function BookingForm() {
 
   function handleSubmit(e) {
     e.preventDefault();
+
+    let actualPeopleCount;
+    if (form.status === 'NO_SHOW') {
+      actualPeopleCount = 0;
+    } else if (form.status === 'PAID') {
+      actualPeopleCount = form.actualPeopleCount === '' ? undefined : Number(form.actualPeopleCount);
+    }
+
     mutation.mutate({
       groupName: form.groupName,
       responsibleName: form.responsibleName,
       responsiblePhone: unmaskPhone(form.responsiblePhone),
       scheduledAt: new Date(form.scheduledAt).toISOString(),
-      peopleCount: Number(form.peopleCount),
+      expectedPeopleCount: Number(form.expectedPeopleCount),
+      actualPeopleCount,
       notes: form.notes || undefined,
       status: form.status,
     });
   }
 
-  const peopleCount = Number(form.peopleCount) || 0;
-  const total = round2(peopleCount * Number(prices.ticketPrice));
-  const guideCommissionTotal = round2(peopleCount * Number(prices.guideCommissionPerPerson));
+  const expectedPeopleCount = Number(form.expectedPeopleCount) || 0;
+  const effectiveCount =
+    form.status === 'NO_SHOW'
+      ? 0
+      : form.status === 'PAID' && form.actualPeopleCount !== ''
+        ? Number(form.actualPeopleCount)
+        : expectedPeopleCount;
+
+  const total = round2(effectiveCount * Number(prices.ticketPrice));
+  const guideCommissionTotal = round2(effectiveCount * Number(prices.guideCommissionPerPerson));
   const ownerShareTotal = round2(total - guideCommissionTotal);
 
   const loading = isEdit ? loadingBooking : loadingSettings;
@@ -173,13 +191,13 @@ export default function BookingForm() {
                 className={inputClass}
               />
             </Field>
-            <Field label="Quantidade de pessoas">
+            <Field label="Quantidade prevista">
               <input
                 required
                 type="number"
                 min="1"
-                value={form.peopleCount}
-                onChange={(e) => setForm((f) => ({ ...f, peopleCount: e.target.value }))}
+                value={form.expectedPeopleCount}
+                onChange={(e) => setForm((f) => ({ ...f, expectedPeopleCount: e.target.value }))}
                 className={inputClass}
               />
             </Field>
@@ -196,6 +214,29 @@ export default function BookingForm() {
                 ))}
               </select>
             </Field>
+
+            {form.status === 'PAID' && (
+              <Field label="Quantidade real (quem de fato compareceu)">
+                <input
+                  type="number"
+                  min="0"
+                  placeholder={String(expectedPeopleCount)}
+                  value={form.actualPeopleCount}
+                  onChange={(e) => setForm((f) => ({ ...f, actualPeopleCount: e.target.value }))}
+                  className={inputClass}
+                />
+              </Field>
+            )}
+
+            {form.status === 'NO_SHOW' && (
+              <Field label="Quantidade real">
+                <input
+                  disabled
+                  value={0}
+                  className={`${inputClass} opacity-50 cursor-not-allowed`}
+                />
+              </Field>
+            )}
           </div>
 
           <Field label="Observacoes">

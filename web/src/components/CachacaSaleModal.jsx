@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { PAYOUT_CATEGORY_LABELS, PAYOUT_CATEGORY_OPTIONS } from '../lib/payoutCategory';
 
 const inputClass =
   'w-full bg-background border border-border rounded px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent';
@@ -13,34 +12,32 @@ function Field({ label, children }) {
   );
 }
 
-const EMPTY_FORM = { category: 'GENERAL', amount: '', paidAt: '', notes: '' };
+const EMPTY_FORM = { soldAt: '', bottleCount: '', notes: '' };
 
-export function PayoutModal({ open, payout, onClose, onSubmit, submitting }) {
+export function CachacaSaleModal({ open, sale, onClose, onSubmit, submitting }) {
   const [form, setForm] = useState(EMPTY_FORM);
 
   useEffect(() => {
     if (open) {
       setForm(
-        payout
+        sale
           ? {
-              category: payout.category,
-              amount: payout.amount,
-              paidAt: payout.paidAt.slice(0, 10),
-              notes: payout.notes ?? '',
+              soldAt: sale.soldAt.slice(0, 10),
+              bottleCount: sale.bottleCount,
+              notes: sale.notes ?? '',
             }
           : EMPTY_FORM
       );
     }
-  }, [open, payout]);
+  }, [open, sale]);
 
   if (!open) return null;
 
   function handleSubmit(e) {
     e.preventDefault();
     onSubmit({
-      category: form.category,
-      amount: Number(form.amount),
-      paidAt: new Date(form.paidAt).toISOString(),
+      soldAt: new Date(form.soldAt).toISOString(),
+      bottleCount: Number(form.bottleCount),
       notes: form.notes || undefined,
     });
   }
@@ -52,41 +49,26 @@ export function PayoutModal({ open, payout, onClose, onSubmit, submitting }) {
         className="bg-surface border border-border rounded-lg p-6 max-w-sm w-full space-y-4"
       >
         <h2 className="font-display text-lg text-text-primary">
-          {payout ? 'Editar repasse' : 'Novo repasse ao dono'}
+          {sale ? 'Editar venda' : 'Nova venda de cachaca'}
         </h2>
 
-        <Field label="Categoria">
-          <select
-            value={form.category}
-            onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-            className={inputClass}
-          >
-            {PAYOUT_CATEGORY_OPTIONS.map((value) => (
-              <option key={value} value={value}>
-                {PAYOUT_CATEGORY_LABELS[value]}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="Valor (R$)">
+        <Field label="Data da venda">
           <input
             required
-            type="number"
-            min="0"
-            step="0.01"
-            value={form.amount}
-            onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+            type="date"
+            value={form.soldAt}
+            onChange={(e) => setForm((f) => ({ ...f, soldAt: e.target.value }))}
             className={inputClass}
           />
         </Field>
 
-        <Field label="Data">
+        <Field label="Quantidade de garrafas">
           <input
             required
-            type="date"
-            value={form.paidAt}
-            onChange={(e) => setForm((f) => ({ ...f, paidAt: e.target.value }))}
+            type="number"
+            min="1"
+            value={form.bottleCount}
+            onChange={(e) => setForm((f) => ({ ...f, bottleCount: e.target.value }))}
             className={inputClass}
           />
         </Field>
