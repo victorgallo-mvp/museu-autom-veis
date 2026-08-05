@@ -8,5 +8,6 @@ const router = Router();
 router.use(requireAuth);
 
 router.get('/summary', asyncHandler(dashboardController.summary));
+router.get('/forecast', asyncHandler(dashboardController.forecast));
 
 module.exports = router;

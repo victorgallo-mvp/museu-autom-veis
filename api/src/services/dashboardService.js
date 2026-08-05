@@ -1,10 +1,9 @@
 const prisma = require('../lib/prisma');
 const { calcTotals, round2 } = require('../lib/money');
 const { serializeBooking } = require('./bookingsService');
-const { serializeSale } = require('./cachacaSalesService');
 
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-const RECENT_LIMIT = 10;
+const DEFAULT_UPCOMING_DAYS = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function defaultPeriod() {
   const now = new Date();
@@ -36,7 +35,7 @@ function accumulate(amounts, booking) {
   amounts.ownerShare = round2(amounts.ownerShare + ownerShareTotal);
 }
 
-async function getVisitsSummary(period, now) {
+async function getVisitsSummary(period, now, upcomingDays) {
   const periodBookings = await prisma.booking.findMany({
     where: { scheduledAt: { gte: period.from, lte: period.to } },
   });
@@ -72,16 +71,10 @@ async function getVisitsSummary(period, now) {
 
   counts.visitCount = visitSlots.size;
 
-  const [upcomingRaw, recentRaw] = await Promise.all([
-    prisma.booking.findMany({
-      where: { scheduledAt: { gte: now, lte: new Date(now.getTime() + SEVEN_DAYS_MS) } },
-      orderBy: { scheduledAt: 'asc' },
-    }),
-    prisma.booking.findMany({
-      orderBy: { updatedAt: 'desc' },
-      take: RECENT_LIMIT,
-    }),
-  ]);
+  const upcomingRaw = await prisma.booking.findMany({
+    where: { scheduledAt: { gte: now, lte: new Date(now.getTime() + upcomingDays * DAY_MS) } },
+    orderBy: { scheduledAt: 'asc' },
+  });
 
   return {
     counts,
@@ -89,7 +82,6 @@ async function getVisitsSummary(period, now) {
     forecast,
     attendance,
     upcoming: upcomingRaw.map(serializeBooking),
-    recent: recentRaw.map(serializeBooking),
   };
 }
 
@@ -115,31 +107,54 @@ async function getProductsSummary(period) {
     totals.ownerShare = round2(totals.ownerShare + ownerShareTotal);
   }
 
-  const recentRaw = await prisma.cachacaSale.findMany({
-    orderBy: { updatedAt: 'desc' },
-    take: RECENT_LIMIT,
-  });
-
   return {
     counts: { total: periodSales.length },
     totals,
-    recent: recentRaw.map(serializeSale),
   };
 }
 
-async function getSummary({ from, to }) {
+async function getExpensesTotal(period) {
+  const expenses = await prisma.expense.findMany({
+    where: { paidAt: { gte: period.from, lte: period.to } },
+  });
+
+  return round2(expenses.reduce((sum, e) => sum + Number(e.amount), 0));
+}
+
+async function getSummary({ from, to, upcomingDays }) {
   const period = {
     from: from || defaultPeriod().from,
     to: to || defaultPeriod().to,
   };
   const now = new Date();
 
-  const [visits, products] = await Promise.all([
-    getVisitsSummary(period, now),
+  const [visits, products, expenses] = await Promise.all([
+    getVisitsSummary(period, now, upcomingDays || DEFAULT_UPCOMING_DAYS),
     getProductsSummary(period),
+    getExpensesTotal(period),
   ]);
 
-  return { period, visits, products };
+  return { period, visits, products, expenses };
 }
 
-module.exports = { getSummary };
+async function getForecast({ from, to }) {
+  const now = new Date();
+  const where = {
+    status: 'PENDING',
+    scheduledAt: { gte: from || now },
+  };
+  if (to) {
+    where.scheduledAt.lte = to;
+  }
+
+  const bookings = await prisma.booking.findMany({ where });
+
+  const amounts = emptyAmounts();
+  for (const booking of bookings) {
+    accumulate(amounts, booking);
+  }
+
+  return amounts;
+}
+
+module.exports = { getSummary, getForecast };
