@@ -4,6 +4,8 @@ function serialize(setting) {
   return {
     ticketPrice: Number(setting.ticketPrice),
     guideCommissionPerPerson: Number(setting.guideCommissionPerPerson),
+    cachacaPrice: Number(setting.cachacaPrice),
+    cachacaCommission: Number(setting.cachacaCommission),
     updatedAt: setting.updatedAt,
   };
 }
@@ -18,11 +20,18 @@ async function getSettings() {
   return serialize(setting);
 }
 
-async function updateSettings({ ticketPrice, guideCommissionPerPerson }) {
+async function updateSettings({
+  ticketPrice,
+  guideCommissionPerPerson,
+  cachacaPrice,
+  cachacaCommission,
+}) {
+  const data = { ticketPrice, guideCommissionPerPerson, cachacaPrice, cachacaCommission };
+
   const setting = await prisma.setting.upsert({
     where: { id: 1 },
-    update: { ticketPrice, guideCommissionPerPerson },
-    create: { id: 1, ticketPrice, guideCommissionPerPerson },
+    update: data,
+    create: { id: 1, ...data },
   });
 
   return serialize(setting);

@@ -8,13 +8,15 @@ const bookingInputSchema = z.object({
   responsibleName: z.string().min(1),
   responsiblePhone: z.string().min(1),
   scheduledAt: z.coerce.date(),
-  peopleCount: z.number().int().positive(),
+  expectedPeopleCount: z.number().int().positive(),
+  actualPeopleCount: z.number().int().nonnegative().optional().nullable(),
   notes: z.string().optional().nullable(),
   status: z.enum(STATUS_VALUES).optional().default('PENDING'),
 });
 
 const statusSchema = z.object({
   status: z.enum(STATUS_VALUES),
+  actualPeopleCount: z.number().int().nonnegative().optional(),
 });
 
 const listQuerySchema = z.object({
@@ -55,8 +57,8 @@ async function update(req, res) {
 }
 
 async function updateStatus(req, res) {
-  const { status } = statusSchema.parse(req.body);
-  const booking = await bookingsService.updateBookingStatus(req.params.id, status);
+  const { status, actualPeopleCount } = statusSchema.parse(req.body);
+  const booking = await bookingsService.updateBookingStatus(req.params.id, status, actualPeopleCount);
   res.json(booking);
 }
 

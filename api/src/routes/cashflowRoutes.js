@@ -8,5 +8,6 @@ const router = Router();
 router.use(requireAuth);
 
 router.get('/summary', asyncHandler(cashflowController.summary));
+router.get('/history', asyncHandler(cashflowController.history));
 
 module.exports = router;

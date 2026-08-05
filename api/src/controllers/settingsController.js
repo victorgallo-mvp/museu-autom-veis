@@ -4,6 +4,8 @@ const settingsService = require('../services/settingsService');
 const updateSettingsSchema = z.object({
   ticketPrice: z.number().positive(),
   guideCommissionPerPerson: z.number().positive(),
+  cachacaPrice: z.number().nonnegative(),
+  cachacaCommission: z.number().nonnegative(),
 });
 
 async function getSettings(req, res) {

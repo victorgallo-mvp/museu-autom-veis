@@ -4,6 +4,7 @@ const AppError = require('../lib/AppError');
 function serialize(payout) {
   return {
     id: payout.id,
+    category: payout.category,
     amount: Number(payout.amount),
     paidAt: payout.paidAt,
     notes: payout.notes,

@@ -1,13 +1,17 @@
 const prisma = require('../lib/prisma');
 const AppError = require('../lib/AppError');
 const settingsService = require('./settingsService');
-const { calcBookingTotals } = require('../lib/money');
+const { calcTotals } = require('../lib/money');
+
+function effectiveCount(booking) {
+  return booking.actualPeopleCount ?? booking.expectedPeopleCount;
+}
 
 function serialize(booking) {
   const ticketPriceSnapshot = Number(booking.ticketPriceSnapshot);
   const guideCommissionSnapshot = Number(booking.guideCommissionSnapshot);
-  const { total, guideCommissionTotal, ownerShareTotal } = calcBookingTotals(
-    booking.peopleCount,
+  const { total, commissionTotal, ownerShareTotal } = calcTotals(
+    effectiveCount(booking),
     ticketPriceSnapshot,
     guideCommissionSnapshot
   );
@@ -18,11 +22,12 @@ function serialize(booking) {
     responsibleName: booking.responsibleName,
     responsiblePhone: booking.responsiblePhone,
     scheduledAt: booking.scheduledAt,
-    peopleCount: booking.peopleCount,
+    expectedPeopleCount: booking.expectedPeopleCount,
+    actualPeopleCount: booking.actualPeopleCount,
     ticketPriceSnapshot,
     guideCommissionSnapshot,
     total,
-    guideCommissionTotal,
+    guideCommissionTotal: commissionTotal,
     ownerShareTotal,
     status: booking.status,
     notes: booking.notes,
@@ -82,7 +87,8 @@ async function createBooking(data) {
       responsibleName: data.responsibleName,
       responsiblePhone: data.responsiblePhone,
       scheduledAt: data.scheduledAt,
-      peopleCount: data.peopleCount,
+      expectedPeopleCount: data.expectedPeopleCount,
+      actualPeopleCount: data.actualPeopleCount,
       notes: data.notes,
       status: data.status,
       ticketPriceSnapshot: settings.ticketPrice,
@@ -103,7 +109,8 @@ async function updateBooking(id, data) {
       responsibleName: data.responsibleName,
       responsiblePhone: data.responsiblePhone,
       scheduledAt: data.scheduledAt,
-      peopleCount: data.peopleCount,
+      expectedPeopleCount: data.expectedPeopleCount,
+      actualPeopleCount: data.actualPeopleCount,
       notes: data.notes,
       status: data.status,
     },
@@ -112,13 +119,22 @@ async function updateBooking(id, data) {
   return serialize(booking);
 }
 
-async function updateBookingStatus(id, status) {
-  await getBookingById(id);
+async function updateBookingStatus(id, status, actualPeopleCount) {
+  const existing = await prisma.booking.findUnique({ where: { id } });
 
-  const booking = await prisma.booking.update({
-    where: { id },
-    data: { status },
-  });
+  if (!existing) {
+    throw new AppError('Agendamento nao encontrado', 404);
+  }
+
+  const data = { status };
+
+  if (status === 'PAID') {
+    data.actualPeopleCount = actualPeopleCount ?? existing.expectedPeopleCount;
+  } else if (status === 'NO_SHOW') {
+    data.actualPeopleCount = 0;
+  }
+
+  const booking = await prisma.booking.update({ where: { id }, data });
 
   return serialize(booking);
 }

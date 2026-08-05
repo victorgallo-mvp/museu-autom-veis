@@ -18,6 +18,8 @@ model Setting {
   id                       Int      @id @default(1)
   ticketPrice              Decimal  @default(60.00) @db.Decimal(10, 2)
   guideCommissionPerPerson Decimal  @default(15.00) @db.Decimal(10, 2)
+  cachacaPrice             Decimal  @default(0) @db.Decimal(10, 2)
+  cachacaCommission        Decimal  @default(0) @db.Decimal(10, 2)
   updatedAt                DateTime @updatedAt
 }
 
@@ -27,7 +29,8 @@ model Booking {
   responsibleName         String
   responsiblePhone        String
   scheduledAt             DateTime
-  peopleCount             Int
+  expectedPeopleCount     Int           @map("peopleCount")
+  actualPeopleCount       Int?
   ticketPriceSnapshot     Decimal       @db.Decimal(10, 2)
   guideCommissionSnapshot Decimal       @db.Decimal(10, 2)
   status                  BookingStatus @default(PENDING)
@@ -58,36 +61,33 @@ model Expense {
   @@index([paidAt])
 }
 
+enum PayoutCategory {
+  VISITS
+  PRODUCTS
+  GENERAL
+}
+
 model Payout {
-  id        String   @id @default(uuid())
-  amount    Decimal  @db.Decimal(10, 2)
+  id        String         @id @default(uuid())
+  category  PayoutCategory
+  amount    Decimal        @db.Decimal(10, 2)
   paidAt    DateTime
   notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@index([paidAt])
 }
 
-// Fase 2: schema ja preparado, sem UI nesta fase
-model Product {
-  id              String        @id @default(uuid())
-  name            String
-  price           Decimal       @db.Decimal(10, 2)
-  guideCommission Decimal       @db.Decimal(10, 2)
-  stock           Int           @default(0)
-  active          Boolean       @default(true)
-  createdAt       DateTime      @default(now())
-  sales           ProductSale[]
-}
+model CachacaSale {
+  id                 String   @id @default(uuid())
+  soldAt             DateTime
+  bottleCount        Int
+  unitPriceSnapshot  Decimal  @db.Decimal(10, 2)
+  commissionSnapshot Decimal  @db.Decimal(10, 2)
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-model ProductSale {
-  id                      String   @id @default(uuid())
-  productId               String
-  product                 Product  @relation(fields: [productId], references: [id])
-  quantity                Int
-  unitPriceSnapshot       Decimal  @db.Decimal(10, 2)
-  guideCommissionSnapshot Decimal  @db.Decimal(10, 2)
-  soldAt                  DateTime @default(now())
-  createdAt               DateTime @default(now())
+  @@index([soldAt])
 }

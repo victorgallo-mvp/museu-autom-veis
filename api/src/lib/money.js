@@ -2,12 +2,12 @@ function round2(value) {
   return Math.round(value * 100) / 100;
 }
 
-function calcBookingTotals(peopleCount, ticketPriceSnapshot, guideCommissionSnapshot) {
-  const total = round2(peopleCount * ticketPriceSnapshot);
-  const guideCommissionTotal = round2(peopleCount * guideCommissionSnapshot);
-  const ownerShareTotal = round2(total - guideCommissionTotal);
+function calcTotals(quantity, unitPrice, commissionPerUnit) {
+  const total = round2(quantity * unitPrice);
+  const commissionTotal = round2(quantity * commissionPerUnit);
+  const ownerShareTotal = round2(total - commissionTotal);
 
-  return { total, guideCommissionTotal, ownerShareTotal };
+  return { total, commissionTotal, ownerShareTotal };
 }
 
-module.exports = { round2, calcBookingTotals };
+module.exports = { round2, calcTotals };

@@ -2,6 +2,7 @@ const { z } = require('zod');
 const payoutsService = require('../services/payoutsService');
 
 const payoutInputSchema = z.object({
+  category: z.enum(['VISITS', 'PRODUCTS', 'GENERAL']),
   amount: z.number().positive(),
   paidAt: z.coerce.date(),
   notes: z.string().optional().nullable(),
