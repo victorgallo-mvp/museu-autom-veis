@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
 import { formatCurrency, formatDateTime } from '../lib/format';
 import { STATUS_LABELS, STATUS_OPTIONS } from '../lib/bookingStatus';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { downloadCsv } from '../lib/csv';
 
 function useDebouncedValue(value, delayMs) {
   const [debounced, setDebounced] = useState(value);
@@ -87,17 +88,52 @@ export default function Bookings() {
     );
   }
 
+  function handleExport() {
+    const headers = [
+      'Data e hora',
+      'Grupo',
+      'Responsavel',
+      'Telefone',
+      'Qtd prevista',
+      'Qtd real',
+      'Valor total',
+      'Status',
+    ];
+    const rows = (bookings ?? []).map((booking) => [
+      formatDateTime(booking.scheduledAt),
+      booking.groupName,
+      booking.responsibleName,
+      booking.responsiblePhone,
+      booking.expectedPeopleCount,
+      booking.actualPeopleCount ?? '',
+      booking.total,
+      STATUS_LABELS[booking.status],
+    ]);
+    downloadCsv('agendamentos.csv', headers, rows);
+  }
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <h1 className="font-display text-3xl text-text-primary">Agendamentos</h1>
-        <Link
-          to="/bookings/new"
-          className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-background font-medium px-4 py-2 rounded transition-colors"
-        >
-          <Plus size={18} />
-          Novo agendamento
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={!bookings || bookings.length === 0}
+            className="flex items-center gap-2 bg-surface border border-border hover:bg-surface-hover text-text-primary font-medium px-4 py-2 rounded transition-colors disabled:opacity-50"
+          >
+            <Download size={18} />
+            Exportar CSV
+          </button>
+          <Link
+            to="/bookings/new"
+            className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-background font-medium px-4 py-2 rounded transition-colors"
+          >
+            <Plus size={18} />
+            Novo agendamento
+          </Link>
+        </div>
       </div>
 
       <div className="bg-surface border border-border rounded-lg p-4 mb-6 flex flex-wrap items-center gap-3">

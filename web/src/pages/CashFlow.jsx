@@ -1,17 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Wallet,
-  Receipt,
-  HandCoins,
-  MapPinned,
-  Wine,
-  Plus,
-  Pencil,
-  Trash2,
-  ScrollText,
-} from 'lucide-react';
+import { Wallet, Receipt, HandCoins, Plus, Pencil, Trash2, ScrollText } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
 import { formatCurrency, formatDateTime } from '../lib/format';
@@ -138,39 +128,24 @@ export default function CashFlow() {
       {loadingSummary ? (
         <p className="text-text-secondary mb-8">Carregando...</p>
       ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            <StatCard
-              icon={Wallet}
-              label="Saldo em caixa"
-              value={formatCurrency(summary.totals.balance)}
-              highlight
-            />
-            <StatCard
-              icon={Receipt}
-              label="Despesas"
-              value={formatCurrency(summary.totals.expenses)}
-            />
-            <StatCard
-              icon={HandCoins}
-              label="Repassado ao dono (total)"
-              value={formatCurrency(summary.totals.payouts)}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-            <StatCard
-              icon={MapPinned}
-              label="Pendente de visitas"
-              value={formatCurrency(summary.totals.visits.pending)}
-            />
-            <StatCard
-              icon={Wine}
-              label="Pendente de cachaca"
-              value={formatCurrency(summary.totals.products.pending)}
-            />
-          </div>
-        </>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <StatCard
+            icon={Wallet}
+            label="Saldo em caixa"
+            value={formatCurrency(summary.totals.balance)}
+            highlight
+          />
+          <StatCard
+            icon={Receipt}
+            label="Despesas"
+            value={formatCurrency(summary.totals.expenses)}
+          />
+          <StatCard
+            icon={HandCoins}
+            label="Repassado ao dono (total)"
+            value={formatCurrency(summary.totals.payouts)}
+          />
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

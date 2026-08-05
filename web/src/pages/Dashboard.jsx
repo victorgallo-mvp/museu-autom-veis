@@ -14,21 +14,37 @@ import {
   Wallet,
   HandCoins,
   Landmark,
+  Receipt,
   Clock3,
   MapPinned,
+  Boxes,
   ClipboardCheck,
   Wine,
 } from 'lucide-react';
 import api from '../lib/api';
 import { formatCurrency, formatDateTime } from '../lib/format';
 import { StatusBadge } from '../components/StatusBadge';
+import { PeriodSelector } from '../components/PeriodSelector';
 
 const PERIOD_OPTIONS = [
   { value: 'today', label: 'Hoje' },
   { value: 'week', label: 'Esta semana' },
   { value: 'month', label: 'Este mes' },
   { value: 'lastMonth', label: 'Mes passado' },
+  { value: 'allTime', label: 'Todo periodo' },
   { value: 'custom', label: 'Personalizado' },
+];
+
+const FORECAST_OPTIONS = [
+  { value: '7d', label: '7 dias' },
+  { value: '14d', label: '14 dias' },
+  { value: 'month', label: 'Este mes' },
+  { value: 'all', label: 'Todas agendadas' },
+];
+
+const UPCOMING_OPTIONS = [
+  { value: '7', label: '7 dias' },
+  { value: '30', label: '30 dias' },
 ];
 
 function computeRange(period, customRange) {
@@ -46,6 +62,8 @@ function computeRange(period, customRange) {
       const lastMonth = subMonths(now, 1);
       return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
     }
+    case 'allTime':
+      return { from: new Date(2000, 0, 1), to: new Date(2100, 0, 1) };
     case 'custom':
       return {
         from: customRange.from ? startOfDay(new Date(customRange.from)) : startOfMonth(now),
@@ -57,58 +75,47 @@ function computeRange(period, customRange) {
   }
 }
 
-function StatCard({ icon: Icon, label, value }) {
+function computeForecastRange(preset) {
+  const now = new Date();
+
+  switch (preset) {
+    case '7d':
+      return { from: now, to: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) };
+    case '14d':
+      return { from: now, to: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000) };
+    case 'month':
+      return { from: now, to: endOfMonth(now) };
+    case 'all':
+    default:
+      return { from: now, to: undefined };
+  }
+}
+
+function StatCard({ icon: Icon, label, value, highlight }) {
   return (
-    <div className="bg-surface border border-border rounded-lg p-5">
+    <div
+      className={`border rounded-lg p-5 ${
+        highlight ? 'bg-accent/10 border-accent' : 'bg-surface border-border'
+      }`}
+    >
       <div className="flex items-center gap-2 text-text-secondary text-sm mb-2">
         <Icon size={16} />
         <span>{label}</span>
       </div>
-      <p className="font-display text-2xl text-text-primary">{value}</p>
+      <p className={`font-display text-2xl ${highlight ? 'text-accent' : 'text-text-primary'}`}>
+        {value}
+      </p>
     </div>
   );
 }
 
-function PeriodSelector({ period, onPeriodChange, customRange, onCustomRangeChange }) {
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <select
-        value={period}
-        onChange={(e) => onPeriodChange(e.target.value)}
-        className="bg-surface border border-border rounded px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent"
-      >
-        {PERIOD_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-
-      {period === 'custom' && (
-        <>
-          <input
-            type="date"
-            value={customRange.from}
-            onChange={(e) => onCustomRangeChange((r) => ({ ...r, from: e.target.value }))}
-            className="bg-surface border border-border rounded px-2 py-2 text-sm text-text-primary focus:outline-none focus:border-accent"
-          />
-          <span className="text-text-secondary text-sm">ate</span>
-          <input
-            type="date"
-            value={customRange.to}
-            onChange={(e) => onCustomRangeChange((r) => ({ ...r, to: e.target.value }))}
-            className="bg-surface border border-border rounded px-2 py-2 text-sm text-text-primary focus:outline-none focus:border-accent"
-          />
-        </>
-      )}
-    </div>
-  );
-}
-
-function BookingList({ title, bookings, emptyLabel }) {
+function BookingList({ title, bookings, emptyLabel, extra }) {
   return (
     <div className="bg-surface border border-border rounded-lg p-6">
-      <h2 className="font-display text-lg text-text-primary mb-4">{title}</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-display text-lg text-text-primary">{title}</h2>
+        {extra}
+      </div>
       {bookings.length === 0 ? (
         <p className="text-text-secondary text-sm">{emptyLabel}</p>
       ) : (
@@ -139,14 +146,43 @@ function SectionHeading({ children }) {
 export default function Dashboard() {
   const [period, setPeriod] = useState('month');
   const [customRange, setCustomRange] = useState({ from: '', to: '' });
+  const [forecastPeriod, setForecastPeriod] = useState('7d');
+  const [upcomingDays, setUpcomingDays] = useState('7');
 
   const range = useMemo(() => computeRange(period, customRange), [period, customRange]);
+  const forecastRange = useMemo(() => computeForecastRange(forecastPeriod), [forecastPeriod]);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['dashboard-summary', range.from.toISOString(), range.to.toISOString()],
+    queryKey: [
+      'dashboard-summary',
+      range.from.toISOString(),
+      range.to.toISOString(),
+      upcomingDays,
+    ],
     queryFn: async () => {
       const { data } = await api.get('/dashboard/summary', {
-        params: { from: range.from.toISOString(), to: range.to.toISOString() },
+        params: {
+          from: range.from.toISOString(),
+          to: range.to.toISOString(),
+          upcomingDays,
+        },
+      });
+      return data;
+    },
+  });
+
+  const { data: forecast, isLoading: loadingForecast } = useQuery({
+    queryKey: [
+      'dashboard-forecast',
+      forecastRange.from.toISOString(),
+      forecastRange.to?.toISOString(),
+    ],
+    queryFn: async () => {
+      const { data } = await api.get('/dashboard/forecast', {
+        params: {
+          from: forecastRange.from.toISOString(),
+          to: forecastRange.to?.toISOString(),
+        },
       });
       return data;
     },
@@ -157,6 +193,7 @@ export default function Dashboard() {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h1 className="font-display text-3xl text-text-primary">Dashboard</h1>
         <PeriodSelector
+          options={PERIOD_OPTIONS}
           period={period}
           onPeriodChange={setPeriod}
           customRange={customRange}
@@ -169,12 +206,48 @@ export default function Dashboard() {
 
       {data && (
         <>
-          <SectionHeading>Visitas</SectionHeading>
+          <SectionHeading>Resumo</SectionHeading>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              icon={Wallet}
+              label="Faturamento total"
+              value={formatCurrency(data.visits.totals.revenue + data.products.totals.revenue)}
+            />
+            <StatCard
+              icon={HandCoins}
+              label="Comissao total"
+              value={formatCurrency(
+                data.visits.totals.guideCommission + data.products.totals.commission
+              )}
+            />
+            <StatCard icon={Receipt} label="Despesas" value={formatCurrency(data.expenses)} />
+            <StatCard
+              icon={Landmark}
+              label="Arrecadacao da ONG"
+              value={formatCurrency(
+                data.visits.totals.revenue +
+                  data.products.totals.revenue -
+                  (data.visits.totals.guideCommission + data.products.totals.commission) -
+                  data.expenses
+              )}
+              highlight
+            />
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <StatCard icon={MapPinned} label="Total de visitas" value={data.visits.counts.visitCount} />
-            <StatCard icon={Users} label="Visitas pagas" value={data.visits.counts.paid} />
-            <StatCard icon={Wallet} label="Receita" value={formatCurrency(data.visits.totals.revenue)} />
+          <SectionHeading>Resumo Visitas</SectionHeading>
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <StatCard icon={Users} label="Qtd de visitantes" value={data.visits.totals.people} />
+            <StatCard icon={Boxes} label="Qtd de grupos" value={data.visits.counts.paid} />
+            <StatCard
+              icon={MapPinned}
+              label="Qtd de visitas"
+              value={data.visits.counts.visitCount}
+            />
+            <StatCard
+              icon={Wallet}
+              label="Receita total"
+              value={formatCurrency(data.visits.totals.revenue)}
+            />
             <StatCard
               icon={HandCoins}
               label="Comissao do guia"
@@ -182,15 +255,79 @@ export default function Dashboard() {
             />
             <StatCard
               icon={Landmark}
-              label="Repasse ao dono"
+              label="Arrecadacao ONG"
               value={formatCurrency(data.visits.totals.ownerShare)}
             />
           </div>
 
-          <div className="bg-surface border border-border rounded-lg p-6 mb-6">
+          <SectionHeading>Resumo Cachacas</SectionHeading>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard icon={Wine} label="Garrafas vendidas" value={data.products.totals.bottles} />
+            <StatCard
+              icon={Wallet}
+              label="Receita total"
+              value={formatCurrency(data.products.totals.revenue)}
+            />
+            <StatCard
+              icon={HandCoins}
+              label="Comissao do guia"
+              value={formatCurrency(data.products.totals.commission)}
+            />
+            <StatCard
+              icon={Landmark}
+              label="Arrecadacao ONG"
+              value={formatCurrency(data.products.totals.ownerShare)}
+            />
+          </div>
+
+          <SectionHeading>Faturamento Previsto</SectionHeading>
+          <div className="bg-surface border border-border rounded-lg p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <div className="flex items-center gap-2 text-warning">
+                <Clock3 size={18} />
+                <h3 className="font-display text-lg text-text-primary">
+                  Visitas agendadas (pendentes)
+                </h3>
+              </div>
+              <PeriodSelector
+                options={FORECAST_OPTIONS}
+                period={forecastPeriod}
+                onPeriodChange={setForecastPeriod}
+              />
+            </div>
+            {loadingForecast || !forecast ? (
+              <p className="text-text-secondary text-sm">Carregando...</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <p className="text-text-secondary">Pessoas previstas</p>
+                  <p className="text-text-primary text-lg">{forecast.people}</p>
+                </div>
+                <div>
+                  <p className="text-text-secondary">Receita prevista</p>
+                  <p className="text-text-primary text-lg">{formatCurrency(forecast.revenue)}</p>
+                </div>
+                <div>
+                  <p className="text-text-secondary">Comissao prevista</p>
+                  <p className="text-text-primary text-lg">
+                    {formatCurrency(forecast.guideCommission)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-text-secondary">Arrecadacao ONG prevista</p>
+                  <p className="text-text-primary text-lg">
+                    {formatCurrency(forecast.ownerShare)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <SectionHeading>Previsto x realizado</SectionHeading>
+          <div className="bg-surface border border-border rounded-lg p-6">
             <div className="flex items-center gap-2 mb-4 text-text-primary">
               <ClipboardCheck size={18} />
-              <h3 className="font-display text-lg">Previsto x realizado</h3>
+              <h3 className="font-display text-lg">Previsto x realizado (periodo selecionado)</h3>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
               <div>
@@ -210,72 +347,19 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-surface border border-border rounded-lg p-6 mb-8">
-            <div className="flex items-center gap-2 mb-4 text-warning">
-              <Clock3 size={18} />
-              <h3 className="font-display text-lg text-text-primary">
-                Previsto (pendentes futuros)
-              </h3>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-              <div>
-                <p className="text-text-secondary">Pessoas</p>
-                <p className="text-text-primary text-lg">{data.visits.forecast.people}</p>
-              </div>
-              <div>
-                <p className="text-text-secondary">Receita prevista</p>
-                <p className="text-text-primary text-lg">
-                  {formatCurrency(data.visits.forecast.revenue)}
-                </p>
-              </div>
-              <div>
-                <p className="text-text-secondary">Comissao prevista</p>
-                <p className="text-text-primary text-lg">
-                  {formatCurrency(data.visits.forecast.guideCommission)}
-                </p>
-              </div>
-              <div>
-                <p className="text-text-secondary">Repasse previsto</p>
-                <p className="text-text-primary text-lg">
-                  {formatCurrency(data.visits.forecast.ownerShare)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <BookingList
-              title="Proximas visitas (7 dias)"
-              bookings={data.visits.upcoming}
-              emptyLabel="Nenhuma visita nos proximos 7 dias."
-            />
-            <BookingList
-              title="Ultimas alteracoes"
-              bookings={data.visits.recent}
-              emptyLabel="Nenhum agendamento ainda."
-            />
-          </div>
-
-          <SectionHeading>Cachacas</SectionHeading>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard icon={Wine} label="Garrafas vendidas" value={data.products.totals.bottles} />
-            <StatCard
-              icon={Wallet}
-              label="Receita"
-              value={formatCurrency(data.products.totals.revenue)}
-            />
-            <StatCard
-              icon={HandCoins}
-              label="Comissao"
-              value={formatCurrency(data.products.totals.commission)}
-            />
-            <StatCard
-              icon={Landmark}
-              label="Repasse ao dono"
-              value={formatCurrency(data.products.totals.ownerShare)}
-            />
-          </div>
+          <SectionHeading>Proximas visitas</SectionHeading>
+          <BookingList
+            title={`Proximos ${upcomingDays} dias`}
+            bookings={data.visits.upcoming}
+            emptyLabel="Nenhuma visita no periodo."
+            extra={
+              <PeriodSelector
+                options={UPCOMING_OPTIONS}
+                period={upcomingDays}
+                onPeriodChange={setUpcomingDays}
+              />
+            }
+          />
         </>
       )}
     </div>
