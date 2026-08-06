@@ -16,6 +16,12 @@
   --color-error: #9c2f44;
   --color-wine: #7c1f2f;
 
+  --color-sidebar: #1f0a0e;
+  --color-sidebar-hover: #2e1a19;
+  --color-sidebar-border: #3a201f;
+  --color-sidebar-text: #f7ece1;
+  --color-sidebar-text-secondary: #c7a89c;
+
   --font-display: "Playfair Display", serif;
   --font-sans: "Inter", sans-serif;
 }

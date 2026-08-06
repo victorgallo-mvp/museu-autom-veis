@@ -21,10 +21,10 @@ export function Layout() {
 
   return (
     <div className="min-h-screen flex">
-      <aside className="w-60 shrink-0 bg-surface border-r border-border flex flex-col">
-        <div className="p-6 border-b border-border flex flex-col items-center text-center gap-3">
+      <aside className="w-60 shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col">
+        <div className="p-6 border-b border-sidebar-border flex flex-col items-center text-center gap-3">
           <img src="/logo.png" alt="Garagem do Automóvel" className="w-24 h-auto" />
-          <h1 className="font-display text-lg text-wine leading-tight">Garagem do Automóvel</h1>
+          <h1 className="font-display text-lg text-accent leading-tight">Garagem do Automóvel</h1>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -36,7 +36,7 @@ export function Layout() {
                 `flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors ${
                   isActive
                     ? 'bg-accent/10 text-accent'
-                    : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
+                    : 'text-sidebar-text-secondary hover:bg-sidebar-hover hover:text-sidebar-text'
                 }`
               }
             >
@@ -46,11 +46,11 @@ export function Layout() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-sidebar-border">
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded text-sm text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded text-sm text-sidebar-text-secondary hover:bg-sidebar-hover hover:text-sidebar-text transition-colors"
           >
             <LogOut size={18} />
             Sair
