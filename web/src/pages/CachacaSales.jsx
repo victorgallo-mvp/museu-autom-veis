@@ -42,7 +42,7 @@ export default function CachacaSales() {
     mutationFn: (id) => api.delete(`/cachaca-sales/${id}`),
     onSuccess: () => {
       invalidateAll();
-      toast.success('Venda excluida');
+      toast.success('Venda excluída');
       setSaleToDelete(null);
     },
     onError: () => toast.error('Erro ao excluir venda'),
@@ -51,7 +51,7 @@ export default function CachacaSales() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <h1 className="font-display text-3xl text-text-primary">Cachacas</h1>
+        <h1 className="font-display text-3xl text-wine">Cachaças</h1>
         <button
           type="button"
           onClick={() => setModal({ open: true, sale: null })}
@@ -72,9 +72,9 @@ export default function CachacaSales() {
                 <th className="px-4 py-3 font-medium text-right">Garrafas</th>
                 <th className="px-4 py-3 font-medium text-right">Valor/garrafa</th>
                 <th className="px-4 py-3 font-medium text-right">Total recebido</th>
-                <th className="px-4 py-3 font-medium text-right">Comissao</th>
-                <th className="px-4 py-3 font-medium text-right">Repasse ao dono</th>
-                <th className="px-4 py-3 font-medium text-right">Acoes</th>
+                <th className="px-4 py-3 font-medium text-right">Comissão</th>
+                <th className="px-4 py-3 font-medium text-right">Repasse à ONG</th>
+                <th className="px-4 py-3 font-medium text-right">Ações</th>
               </tr>
             </thead>
             <tbody>

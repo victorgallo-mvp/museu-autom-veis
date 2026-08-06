@@ -36,7 +36,7 @@ export function CachacaSaleModal({ open, sale, onClose, onSubmit, submitting }) 
   function handleSubmit(e) {
     e.preventDefault();
     onSubmit({
-      soldAt: new Date(form.soldAt).toISOString(),
+      soldAt: new Date(`${form.soldAt}T00:00:00`).toISOString(),
       bottleCount: Number(form.bottleCount),
       notes: form.notes || undefined,
     });
@@ -48,8 +48,8 @@ export function CachacaSaleModal({ open, sale, onClose, onSubmit, submitting }) 
         onSubmit={handleSubmit}
         className="bg-surface border border-border rounded-lg p-6 max-w-sm w-full space-y-4"
       >
-        <h2 className="font-display text-lg text-text-primary">
-          {sale ? 'Editar venda' : 'Nova venda de cachaca'}
+        <h2 className="font-display text-lg text-wine">
+          {sale ? 'Editar venda' : 'Nova venda de cachaça'}
         </h2>
 
         <Field label="Data da venda">
@@ -73,7 +73,7 @@ export function CachacaSaleModal({ open, sale, onClose, onSubmit, submitting }) 
           />
         </Field>
 
-        <Field label="Observacao">
+        <Field label="Observação">
           <textarea
             rows={2}
             value={form.notes}

@@ -1,6 +1,6 @@
 export const PAYOUT_CATEGORY_LABELS = {
   VISITS: 'Visitas',
-  PRODUCTS: 'Cachaca',
+  PRODUCTS: 'Cachaça',
   GENERAL: 'Geral',
 };
 

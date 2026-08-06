@@ -18,7 +18,7 @@ export default function Login() {
       navigate('/dashboard');
     } catch (err) {
       if (err.response?.status === 401) {
-        toast.error('Email ou senha invalidos');
+        toast.error('Email ou senha inválidos');
       } else {
         toast.error('Erro ao conectar com o servidor. Tente novamente em instantes.');
       }
@@ -33,10 +33,11 @@ export default function Login() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm bg-surface border border-border rounded-lg p-8"
       >
-        <h1 className="font-display text-2xl text-text-primary mb-1">
-          Museu de Automoveis Antigos
-        </h1>
-        <p className="text-text-secondary text-sm mb-6">Entre com suas credenciais</p>
+        <div className="flex flex-col items-center text-center mb-6">
+          <img src="/logo.png" alt="Garagem do Automóvel" className="w-28 h-auto mb-3" />
+          <h1 className="font-display text-2xl text-wine mb-1">Garagem do Automóvel</h1>
+          <p className="text-text-secondary text-sm">Entre com suas credenciais</p>
+        </div>
 
         <label className="block text-sm text-text-secondary mb-1" htmlFor="email">
           Email

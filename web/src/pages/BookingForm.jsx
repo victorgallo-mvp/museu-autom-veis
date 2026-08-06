@@ -143,7 +143,7 @@ export default function BookingForm() {
         Voltar para agendamentos
       </Link>
 
-      <h1 className="font-display text-3xl text-text-primary mb-6">
+      <h1 className="font-display text-3xl text-wine mb-6">
         {isEdit ? 'Editar agendamento' : 'Novo agendamento'}
       </h1>
 
@@ -163,7 +163,7 @@ export default function BookingForm() {
                 className={inputClass}
               />
             </Field>
-            <Field label="Nome do responsavel">
+            <Field label="Nome do responsável">
               <input
                 required
                 value={form.responsibleName}
@@ -239,7 +239,7 @@ export default function BookingForm() {
             )}
           </div>
 
-          <Field label="Observacoes">
+          <Field label="Observações">
             <textarea
               rows={3}
               value={form.notes}
@@ -256,11 +256,11 @@ export default function BookingForm() {
                 <p className="text-text-primary text-lg">{formatCurrency(total)}</p>
               </div>
               <div>
-                <p className="text-text-secondary">Comissao do guia</p>
+                <p className="text-text-secondary">Comissão do guia</p>
                 <p className="text-text-primary text-lg">{formatCurrency(guideCommissionTotal)}</p>
               </div>
               <div>
-                <p className="text-text-secondary">Repasse ao dono</p>
+                <p className="text-text-secondary">Repasse à ONG</p>
                 <p className="text-text-primary text-lg">{formatCurrency(ownerShareTotal)}</p>
               </div>
             </div>

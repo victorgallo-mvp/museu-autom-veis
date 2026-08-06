@@ -39,7 +39,7 @@ export function ExpenseModal({ open, expense, onClose, onSubmit, submitting }) {
     onSubmit({
       description: form.description,
       amount: Number(form.amount),
-      paidAt: new Date(form.paidAt).toISOString(),
+      paidAt: new Date(`${form.paidAt}T00:00:00`).toISOString(),
       notes: form.notes || undefined,
     });
   }
@@ -50,11 +50,11 @@ export function ExpenseModal({ open, expense, onClose, onSubmit, submitting }) {
         onSubmit={handleSubmit}
         className="bg-surface border border-border rounded-lg p-6 max-w-sm w-full space-y-4"
       >
-        <h2 className="font-display text-lg text-text-primary">
+        <h2 className="font-display text-lg text-wine">
           {expense ? 'Editar despesa' : 'Nova despesa'}
         </h2>
 
-        <Field label="Descricao">
+        <Field label="Descrição">
           <input
             required
             value={form.description}
@@ -85,7 +85,7 @@ export function ExpenseModal({ open, expense, onClose, onSubmit, submitting }) {
           />
         </Field>
 
-        <Field label="Observacao">
+        <Field label="Observação">
           <textarea
             rows={2}
             value={form.notes}

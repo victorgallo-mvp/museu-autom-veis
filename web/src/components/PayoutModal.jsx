@@ -40,7 +40,7 @@ export function PayoutModal({ open, payout, onClose, onSubmit, submitting }) {
     onSubmit({
       category: form.category,
       amount: Number(form.amount),
-      paidAt: new Date(form.paidAt).toISOString(),
+      paidAt: new Date(`${form.paidAt}T00:00:00`).toISOString(),
       notes: form.notes || undefined,
     });
   }
@@ -51,8 +51,8 @@ export function PayoutModal({ open, payout, onClose, onSubmit, submitting }) {
         onSubmit={handleSubmit}
         className="bg-surface border border-border rounded-lg p-6 max-w-sm w-full space-y-4"
       >
-        <h2 className="font-display text-lg text-text-primary">
-          {payout ? 'Editar repasse' : 'Novo repasse ao dono'}
+        <h2 className="font-display text-lg text-wine">
+          {payout ? 'Editar repasse' : 'Novo repasse à ONG'}
         </h2>
 
         <Field label="Categoria">
@@ -91,7 +91,7 @@ export function PayoutModal({ open, payout, onClose, onSubmit, submitting }) {
           />
         </Field>
 
-        <Field label="Observacao">
+        <Field label="Observação">
           <textarea
             rows={2}
             value={form.notes}

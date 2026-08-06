@@ -48,7 +48,6 @@ async function getVisitsSummary(period, now, upcomingDays) {
 
   for (const booking of periodBookings) {
     counts.total += 1;
-    visitSlots.add(booking.scheduledAt.getTime());
 
     if (booking.status === 'PENDING') {
       counts.pending += 1;
@@ -60,12 +59,14 @@ async function getVisitsSummary(period, now, upcomingDays) {
       accumulate(totals, booking);
       attendance.expected += booking.expectedPeopleCount;
       attendance.actual += effectiveCount(booking);
+      visitSlots.add(booking.scheduledAt.getTime());
     } else if (booking.status === 'CANCELED') {
       counts.canceled += 1;
     } else if (booking.status === 'NO_SHOW') {
       counts.noShow += 1;
       attendance.expected += booking.expectedPeopleCount;
       attendance.actual += effectiveCount(booking);
+      visitSlots.add(booking.scheduledAt.getTime());
     }
   }
 

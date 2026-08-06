@@ -52,7 +52,7 @@ async function getSaleById(id) {
   const sale = await prisma.cachacaSale.findUnique({ where: { id } });
 
   if (!sale) {
-    throw new AppError('Venda nao encontrada', 404);
+    throw new AppError('Venda não encontrada', 404);
   }
 
   return sale;

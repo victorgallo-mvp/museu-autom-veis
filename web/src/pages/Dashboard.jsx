@@ -19,7 +19,7 @@ import {
   MapPinned,
   Boxes,
   ClipboardCheck,
-  Wine,
+  BottleWine,
 } from 'lucide-react';
 import api from '../lib/api';
 import { formatCurrency, formatDateTime } from '../lib/format';
@@ -29,16 +29,16 @@ import { PeriodSelector } from '../components/PeriodSelector';
 const PERIOD_OPTIONS = [
   { value: 'today', label: 'Hoje' },
   { value: 'week', label: 'Esta semana' },
-  { value: 'month', label: 'Este mes' },
-  { value: 'lastMonth', label: 'Mes passado' },
-  { value: 'allTime', label: 'Todo periodo' },
+  { value: 'month', label: 'Este mês' },
+  { value: 'lastMonth', label: 'Mês passado' },
+  { value: 'allTime', label: 'Todo período' },
   { value: 'custom', label: 'Personalizado' },
 ];
 
 const FORECAST_OPTIONS = [
   { value: '7d', label: '7 dias' },
   { value: '14d', label: '14 dias' },
-  { value: 'month', label: 'Este mes' },
+  { value: 'month', label: 'Este mês' },
   { value: 'all', label: 'Todas agendadas' },
 ];
 
@@ -66,8 +66,10 @@ function computeRange(period, customRange) {
       return { from: new Date(2000, 0, 1), to: new Date(2100, 0, 1) };
     case 'custom':
       return {
-        from: customRange.from ? startOfDay(new Date(customRange.from)) : startOfMonth(now),
-        to: customRange.to ? endOfDay(new Date(customRange.to)) : endOfMonth(now),
+        from: customRange.from
+          ? startOfDay(new Date(`${customRange.from}T00:00:00`))
+          : startOfMonth(now),
+        to: customRange.to ? endOfDay(new Date(`${customRange.to}T00:00:00`)) : endOfMonth(now),
       };
     case 'month':
     default:
@@ -113,7 +115,7 @@ function BookingList({ title, bookings, emptyLabel, extra }) {
   return (
     <div className="bg-surface border border-border rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-lg text-text-primary">{title}</h2>
+        <h2 className="font-display text-lg text-wine">{title}</h2>
         {extra}
       </div>
       {bookings.length === 0 ? (
@@ -139,7 +141,7 @@ function BookingList({ title, bookings, emptyLabel, extra }) {
 
 function SectionHeading({ children }) {
   return (
-    <h2 className="font-display text-xl text-text-primary mb-4 mt-10 first:mt-0">{children}</h2>
+    <h2 className="font-display text-xl text-wine mb-4 mt-10 first:mt-0">{children}</h2>
   );
 }
 
@@ -191,7 +193,7 @@ export default function Dashboard() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <h1 className="font-display text-3xl text-text-primary">Dashboard</h1>
+        <h1 className="font-display text-3xl text-wine">Dashboard</h1>
         <PeriodSelector
           options={PERIOD_OPTIONS}
           period={period}
@@ -215,7 +217,7 @@ export default function Dashboard() {
             />
             <StatCard
               icon={HandCoins}
-              label="Comissao total"
+              label="Comissão total"
               value={formatCurrency(
                 data.visits.totals.guideCommission + data.products.totals.commission
               )}
@@ -223,14 +225,13 @@ export default function Dashboard() {
             <StatCard icon={Receipt} label="Despesas" value={formatCurrency(data.expenses)} />
             <StatCard
               icon={Landmark}
-              label="Arrecadacao da ONG"
+              label="Arrecadação da ONG"
               value={formatCurrency(
                 data.visits.totals.revenue +
                   data.products.totals.revenue -
                   (data.visits.totals.guideCommission + data.products.totals.commission) -
                   data.expenses
               )}
-              highlight
             />
           </div>
 
@@ -250,19 +251,23 @@ export default function Dashboard() {
             />
             <StatCard
               icon={HandCoins}
-              label="Comissao do guia"
+              label="Comissão do guia"
               value={formatCurrency(data.visits.totals.guideCommission)}
             />
             <StatCard
               icon={Landmark}
-              label="Arrecadacao ONG"
+              label="Arrecadação ONG"
               value={formatCurrency(data.visits.totals.ownerShare)}
             />
           </div>
 
-          <SectionHeading>Resumo Cachacas</SectionHeading>
+          <SectionHeading>Resumo Cachaças</SectionHeading>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard icon={Wine} label="Garrafas vendidas" value={data.products.totals.bottles} />
+            <StatCard
+              icon={BottleWine}
+              label="Garrafas vendidas"
+              value={data.products.totals.bottles}
+            />
             <StatCard
               icon={Wallet}
               label="Receita total"
@@ -270,12 +275,12 @@ export default function Dashboard() {
             />
             <StatCard
               icon={HandCoins}
-              label="Comissao do guia"
+              label="Comissão do guia"
               value={formatCurrency(data.products.totals.commission)}
             />
             <StatCard
               icon={Landmark}
-              label="Arrecadacao ONG"
+              label="Arrecadação ONG"
               value={formatCurrency(data.products.totals.ownerShare)}
             />
           </div>
@@ -285,9 +290,7 @@ export default function Dashboard() {
             <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-2 text-warning">
                 <Clock3 size={18} />
-                <h3 className="font-display text-lg text-text-primary">
-                  Visitas agendadas (pendentes)
-                </h3>
+                <h3 className="font-display text-lg text-wine">Visitas agendadas (pendentes)</h3>
               </div>
               <PeriodSelector
                 options={FORECAST_OPTIONS}
@@ -308,13 +311,13 @@ export default function Dashboard() {
                   <p className="text-text-primary text-lg">{formatCurrency(forecast.revenue)}</p>
                 </div>
                 <div>
-                  <p className="text-text-secondary">Comissao prevista</p>
+                  <p className="text-text-secondary">Comissão prevista</p>
                   <p className="text-text-primary text-lg">
                     {formatCurrency(forecast.guideCommission)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-text-secondary">Arrecadacao ONG prevista</p>
+                  <p className="text-text-secondary">Arrecadação ONG prevista</p>
                   <p className="text-text-primary text-lg">
                     {formatCurrency(forecast.ownerShare)}
                   </p>
@@ -327,7 +330,9 @@ export default function Dashboard() {
           <div className="bg-surface border border-border rounded-lg p-6">
             <div className="flex items-center gap-2 mb-4 text-text-primary">
               <ClipboardCheck size={18} />
-              <h3 className="font-display text-lg">Previsto x realizado (periodo selecionado)</h3>
+              <h3 className="font-display text-lg text-wine">
+                Previsto x realizado (período selecionado)
+              </h3>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
               <div>
@@ -339,7 +344,7 @@ export default function Dashboard() {
                 <p className="text-text-primary text-lg">{data.visits.attendance.actual}</p>
               </div>
               <div>
-                <p className="text-text-secondary">Diferenca</p>
+                <p className="text-text-secondary">Diferença</p>
                 <p className="text-text-primary text-lg">
                   {data.visits.attendance.actual - data.visits.attendance.expected}
                 </p>
@@ -347,11 +352,11 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <SectionHeading>Proximas visitas</SectionHeading>
+          <SectionHeading>Próximas visitas</SectionHeading>
           <BookingList
-            title={`Proximos ${upcomingDays} dias`}
+            title={`Próximos ${upcomingDays} dias`}
             bookings={data.visits.upcoming}
-            emptyLabel="Nenhuma visita no periodo."
+            emptyLabel="Nenhuma visita no período."
             extra={
               <PeriodSelector
                 options={UPCOMING_OPTIONS}

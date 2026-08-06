@@ -5,7 +5,7 @@ const AppError = require('../lib/AppError');
 function errorHandler(err, req, res, next) {
   if (err instanceof ZodError) {
     return res.status(400).json({
-      error: 'Dados invalidos',
+      error: 'Dados inválidos',
       issues: err.issues.map((issue) => ({
         path: issue.path.join('.'),
         message: issue.message,
@@ -15,7 +15,7 @@ function errorHandler(err, req, res, next) {
 
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === 'P2025') {
-      return res.status(404).json({ error: 'Registro nao encontrado' });
+      return res.status(404).json({ error: 'Registro não encontrado' });
     }
     if (err.code === 'P2002') {
       return res.status(409).json({ error: 'Registro duplicado' });

@@ -83,7 +83,7 @@ export default function CashFlow() {
     mutationFn: (id) => api.delete(`/expenses/${id}`),
     onSuccess: () => {
       invalidateAll();
-      toast.success('Despesa excluida');
+      toast.success('Despesa excluída');
       setExpenseToDelete(null);
     },
     onError: () => toast.error('Erro ao excluir despesa'),
@@ -106,7 +106,7 @@ export default function CashFlow() {
     mutationFn: (id) => api.delete(`/payouts/${id}`),
     onSuccess: () => {
       invalidateAll();
-      toast.success('Repasse excluido');
+      toast.success('Repasse excluído');
       setPayoutToDelete(null);
     },
     onError: () => toast.error('Erro ao excluir repasse'),
@@ -115,13 +115,13 @@ export default function CashFlow() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <h1 className="font-display text-3xl text-text-primary">Fluxo de Caixa</h1>
+        <h1 className="font-display text-3xl text-wine">Fluxo de Caixa</h1>
         <Link
           to="/cashflow/history"
           className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
         >
           <ScrollText size={16} />
-          Ver historico completo
+          Ver histórico completo
         </Link>
       </div>
 
@@ -133,7 +133,6 @@ export default function CashFlow() {
             icon={Wallet}
             label="Saldo em caixa"
             value={formatCurrency(summary.totals.balance)}
-            highlight
           />
           <StatCard
             icon={Receipt}
@@ -142,7 +141,7 @@ export default function CashFlow() {
           />
           <StatCard
             icon={HandCoins}
-            label="Repassado ao dono (total)"
+            label="Repassado à ONG (total)"
             value={formatCurrency(summary.totals.payouts)}
           />
         </div>
@@ -151,7 +150,7 @@ export default function CashFlow() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-surface border border-border rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-lg text-text-primary">Despesas</h2>
+            <h2 className="font-display text-lg text-wine">Despesas</h2>
             <button
               type="button"
               onClick={() => setExpenseModal({ open: true, expense: null })}
@@ -207,7 +206,7 @@ export default function CashFlow() {
 
         <div className="bg-surface border border-border rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-lg text-text-primary">Repasses ao dono</h2>
+            <h2 className="font-display text-lg text-wine">Repasses à ONG</h2>
             <button
               type="button"
               onClick={() => setPayoutModal({ open: true, payout: null })}
@@ -228,7 +227,7 @@ export default function CashFlow() {
                 <li key={payout.id} className="py-3 flex items-center justify-between gap-4">
                   <div>
                     <p className="text-text-primary text-sm font-medium">
-                      {payout.notes || 'Repasse ao dono'}
+                      {payout.notes || 'Repasse à ONG'}
                     </p>
                     <p className="text-text-secondary text-xs">
                       {formatDateTime(payout.paidAt)} - {PAYOUT_CATEGORY_LABELS[payout.category]}

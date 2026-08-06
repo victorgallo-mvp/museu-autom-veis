@@ -9,13 +9,13 @@ async function login(email, password) {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
-    throw new AppError('Email ou senha invalidos', 401);
+    throw new AppError('Email ou senha inválidos', 401);
   }
 
   const passwordMatches = await bcrypt.compare(password, user.passwordHash);
 
   if (!passwordMatches) {
-    throw new AppError('Email ou senha invalidos', 401);
+    throw new AppError('Email ou senha inválidos', 401);
   }
 
   const token = jwt.sign({ sub: user.id }, process.env.JWT_SECRET, {
@@ -32,7 +32,7 @@ async function getUserById(id) {
   const user = await prisma.user.findUnique({ where: { id } });
 
   if (!user) {
-    throw new AppError('Usuario nao encontrado', 404);
+    throw new AppError('Usuário não encontrado', 404);
   }
 
   return { id: user.id, email: user.email };

@@ -1,13 +1,13 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, Wine, Wallet, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, BottleWine, Wallet, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/bookings', label: 'Agendamentos', icon: CalendarDays },
-  { to: '/cachaca', label: 'Cachacas', icon: Wine },
+  { to: '/cachaca', label: 'Cachaças', icon: BottleWine },
   { to: '/cashflow', label: 'Fluxo de Caixa', icon: Wallet },
-  { to: '/settings', label: 'Configuracoes', icon: Settings },
+  { to: '/settings', label: 'Configurações', icon: Settings },
 ];
 
 export function Layout() {
@@ -22,10 +22,9 @@ export function Layout() {
   return (
     <div className="min-h-screen flex">
       <aside className="w-60 shrink-0 bg-surface border-r border-border flex flex-col">
-        <div className="p-6 border-b border-border">
-          <h1 className="font-display text-lg text-text-primary leading-tight">
-            Museu de Automoveis Antigos
-          </h1>
+        <div className="p-6 border-b border-border flex flex-col items-center text-center gap-3">
+          <img src="/logo.png" alt="Garagem do Automóvel" className="w-24 h-auto" />
+          <h1 className="font-display text-lg text-wine leading-tight">Garagem do Automóvel</h1>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">

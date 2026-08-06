@@ -10,7 +10,7 @@ import { PeriodSelector } from '../components/PeriodSelector';
 
 const TYPE_LABELS = {
   visit: 'Visita',
-  product: 'Cachaca',
+  product: 'Cachaça',
   expense: 'Despesa',
   payout: 'Repasse',
 };
@@ -22,7 +22,7 @@ const PERIOD_OPTIONS = [
   { value: 'yesterday', label: 'Ontem' },
   { value: '7d', label: '7 dias' },
   { value: '14d', label: '14 dias' },
-  { value: 'month', label: 'Este mes' },
+  { value: 'month', label: 'Este mês' },
   { value: 'custom', label: 'Personalizado' },
 ];
 
@@ -42,8 +42,10 @@ function computeRange(period, customRange) {
       return { from: startOfDay(subDays(now, 13)), to: endOfDay(now) };
     case 'custom':
       return {
-        from: customRange.from ? startOfDay(new Date(customRange.from)) : startOfMonth(now),
-        to: customRange.to ? endOfDay(new Date(customRange.to)) : endOfMonth(now),
+        from: customRange.from
+          ? startOfDay(new Date(`${customRange.from}T00:00:00`))
+          : startOfMonth(now),
+        to: customRange.to ? endOfDay(new Date(`${customRange.to}T00:00:00`)) : endOfMonth(now),
       };
     case 'month':
     default:
@@ -81,12 +83,12 @@ export default function CashflowHistory() {
   }
 
   function handleExport() {
-    const headers = ['Data', 'Tipo', 'Descricao', 'Direcao', 'Valor'];
+    const headers = ['Data', 'Tipo', 'Descrição', 'Direção', 'Valor'];
     const rows = filteredHistory.map((event) => [
       formatDateTime(event.date),
       TYPE_LABELS[event.type] ?? event.type,
       event.description,
-      event.direction === 'in' ? 'Entrada' : 'Saida',
+      event.direction === 'in' ? 'Entrada' : 'Saída',
       event.amount,
     ]);
     downloadCsv('fluxo-de-caixa-historico.csv', headers, rows);
@@ -103,7 +105,7 @@ export default function CashflowHistory() {
       </Link>
 
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <h1 className="font-display text-3xl text-text-primary">Historico de movimentacoes</h1>
+        <h1 className="font-display text-3xl text-wine">Histórico de movimentações</h1>
         <button
           type="button"
           onClick={handleExport}
@@ -149,7 +151,7 @@ export default function CashflowHistory() {
               <tr className="border-b border-border text-left text-text-secondary">
                 <th className="px-4 py-3 font-medium">Data</th>
                 <th className="px-4 py-3 font-medium">Tipo</th>
-                <th className="px-4 py-3 font-medium">Descricao</th>
+                <th className="px-4 py-3 font-medium">Descrição</th>
                 <th className="px-4 py-3 font-medium text-right">Valor</th>
               </tr>
             </thead>
@@ -164,14 +166,14 @@ export default function CashflowHistory() {
               {isError && (
                 <tr>
                   <td colSpan={4} className="px-4 py-6 text-center text-error">
-                    Erro ao carregar historico.
+                    Erro ao carregar histórico.
                   </td>
                 </tr>
               )}
               {filteredHistory.length === 0 && !isLoading && !isError && (
                 <tr>
                   <td colSpan={4} className="px-4 py-6 text-center text-text-secondary">
-                    Nenhuma movimentacao encontrada.
+                    Nenhuma movimentação encontrada.
                   </td>
                 </tr>
               )}

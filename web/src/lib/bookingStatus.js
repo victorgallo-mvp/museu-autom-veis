@@ -2,7 +2,7 @@ export const STATUS_LABELS = {
   PENDING: 'Pendente',
   PAID: 'Pago',
   CANCELED: 'Cancelado',
-  NO_SHOW: 'Nao compareceu',
+  NO_SHOW: 'Não compareceu',
 };
 
 export const STATUS_STYLES = {

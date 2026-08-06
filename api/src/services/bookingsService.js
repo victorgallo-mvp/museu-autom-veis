@@ -72,7 +72,7 @@ async function getBookingById(id) {
   const booking = await prisma.booking.findUnique({ where: { id } });
 
   if (!booking) {
-    throw new AppError('Agendamento nao encontrado', 404);
+    throw new AppError('Agendamento não encontrado', 404);
   }
 
   return serialize(booking);
@@ -123,7 +123,7 @@ async function updateBookingStatus(id, status, actualPeopleCount) {
   const existing = await prisma.booking.findUnique({ where: { id } });
 
   if (!existing) {
-    throw new AppError('Agendamento nao encontrado', 404);
+    throw new AppError('Agendamento não encontrado', 404);
   }
 
   const data = { status };

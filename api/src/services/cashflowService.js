@@ -138,13 +138,13 @@ async function getHistory({ from, to }) {
   }
 
   for (const payout of payouts) {
-    const categoryLabel = { VISITS: 'visitas', PRODUCTS: 'cachaca', GENERAL: 'geral' }[
+    const categoryLabel = { VISITS: 'visitas', PRODUCTS: 'cachaça', GENERAL: 'geral' }[
       payout.category
     ];
     events.push({
       type: 'payout',
       date: payout.paidAt,
-      description: payout.notes || `Repasse ao dono (${categoryLabel})`,
+      description: payout.notes || `Repasse à ONG (${categoryLabel})`,
       amount: Number(payout.amount),
       direction: 'out',
     });

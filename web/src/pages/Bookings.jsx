@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, Search, Download } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Download, ArrowUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
 import { formatCurrency, formatDateTime } from '../lib/format';
@@ -45,6 +45,7 @@ export default function Bookings() {
   const [dateTo, setDateTo] = useState('');
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
+  const [sortOrder, setSortOrder] = useState('asc');
 
   const [bookingToDelete, setBookingToDelete] = useState(null);
 
@@ -76,7 +77,7 @@ export default function Bookings() {
     mutationFn: (id) => api.delete(`/bookings/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      toast.success('Agendamento excluido');
+      toast.success('Agendamento excluído');
       setBookingToDelete(null);
     },
     onError: () => toast.error('Erro ao excluir agendamento'),
@@ -88,18 +89,25 @@ export default function Bookings() {
     );
   }
 
+  const sortedBookings = bookings
+    ? [...bookings].sort((a, b) => {
+        const diff = new Date(a.scheduledAt) - new Date(b.scheduledAt);
+        return sortOrder === 'asc' ? diff : -diff;
+      })
+    : bookings;
+
   function handleExport() {
     const headers = [
       'Data e hora',
       'Grupo',
-      'Responsavel',
+      'Responsável',
       'Telefone',
       'Qtd prevista',
       'Qtd real',
       'Valor total',
       'Status',
     ];
-    const rows = (bookings ?? []).map((booking) => [
+    const rows = (sortedBookings ?? []).map((booking) => [
       formatDateTime(booking.scheduledAt),
       booking.groupName,
       booking.responsibleName,
@@ -115,7 +123,7 @@ export default function Bookings() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <h1 className="font-display text-3xl text-text-primary">Agendamentos</h1>
+        <h1 className="font-display text-3xl text-wine">Agendamentos</h1>
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -143,7 +151,7 @@ export default function Bookings() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por grupo ou responsavel"
+            placeholder="Buscar por grupo ou responsável"
             className="bg-background border border-border rounded pl-9 pr-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent w-64"
           />
         </div>
@@ -178,6 +186,15 @@ export default function Bookings() {
             </button>
           ))}
         </div>
+
+        <button
+          type="button"
+          onClick={() => setSortOrder((current) => (current === 'asc' ? 'desc' : 'asc'))}
+          className="flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium border border-border text-text-secondary hover:bg-surface-hover transition-colors"
+        >
+          <ArrowUpDown size={14} />
+          {sortOrder === 'asc' ? 'Mais antigo primeiro' : 'Mais novo primeiro'}
+        </button>
       </div>
 
       <div className="bg-surface border border-border rounded-lg overflow-hidden">
@@ -187,11 +204,11 @@ export default function Bookings() {
               <tr className="border-b border-border text-left text-text-secondary">
                 <th className="px-4 py-3 font-medium">Data e hora</th>
                 <th className="px-4 py-3 font-medium">Grupo</th>
-                <th className="px-4 py-3 font-medium">Responsavel</th>
+                <th className="px-4 py-3 font-medium">Responsável</th>
                 <th className="px-4 py-3 font-medium text-right">Pessoas</th>
                 <th className="px-4 py-3 font-medium text-right">Valor total</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium text-right">Acoes</th>
+                <th className="px-4 py-3 font-medium text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -209,14 +226,14 @@ export default function Bookings() {
                   </td>
                 </tr>
               )}
-              {bookings && bookings.length === 0 && (
+              {sortedBookings && sortedBookings.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-6 text-center text-text-secondary">
                     Nenhum agendamento encontrado.
                   </td>
                 </tr>
               )}
-              {bookings?.map((booking) => (
+              {sortedBookings?.map((booking) => (
                 <tr key={booking.id} className="border-b border-border last:border-0 hover:bg-surface-hover">
                   <td className="px-4 py-3 text-text-primary whitespace-nowrap">
                     {formatDateTime(booking.scheduledAt)}
@@ -273,7 +290,7 @@ export default function Bookings() {
         title="Excluir agendamento"
         description={
           bookingToDelete
-            ? `Tem certeza que deseja excluir o agendamento de "${bookingToDelete.groupName}"? Essa acao nao pode ser desfeita.`
+            ? `Tem certeza que deseja excluir o agendamento de "${bookingToDelete.groupName}"? Essa ação não pode ser desfeita.`
             : ''
         }
         confirmLabel="Excluir"

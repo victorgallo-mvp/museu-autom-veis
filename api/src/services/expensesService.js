@@ -38,7 +38,7 @@ async function getExpenseById(id) {
   const expense = await prisma.expense.findUnique({ where: { id } });
 
   if (!expense) {
-    throw new AppError('Despesa nao encontrada', 404);
+    throw new AppError('Despesa não encontrada', 404);
   }
 
   return expense;

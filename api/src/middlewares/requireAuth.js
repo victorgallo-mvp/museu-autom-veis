@@ -5,7 +5,7 @@ function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new AppError('Token nao fornecido', 401);
+    throw new AppError('Token não fornecido', 401);
   }
 
   const token = authHeader.slice('Bearer '.length);
@@ -15,7 +15,7 @@ function requireAuth(req, res, next) {
     req.userId = payload.sub;
     next();
   } catch (err) {
-    throw new AppError('Token invalido ou expirado', 401);
+    throw new AppError('Token inválido ou expirado', 401);
   }
 }
 

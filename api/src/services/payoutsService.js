@@ -38,7 +38,7 @@ async function getPayoutById(id) {
   const payout = await prisma.payout.findUnique({ where: { id } });
 
   if (!payout) {
-    throw new AppError('Repasse nao encontrado', 404);
+    throw new AppError('Repasse não encontrado', 404);
   }
 
   return payout;

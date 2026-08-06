@@ -48,9 +48,9 @@ export default function Settings() {
     mutationFn: (payload) => api.put('/settings', payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
-      toast.success('Configuracoes atualizadas');
+      toast.success('Configurações atualizadas');
     },
-    onError: () => toast.error('Erro ao salvar configuracoes'),
+    onError: () => toast.error('Erro ao salvar configurações'),
   });
 
   function handleSubmit(e) {
@@ -65,13 +65,13 @@ export default function Settings() {
 
   return (
     <div className="max-w-xl">
-      <h1 className="font-display text-3xl text-text-primary mb-6">Configuracoes</h1>
+      <h1 className="font-display text-3xl text-wine mb-6">Configurações</h1>
 
       <div className="flex items-start gap-3 bg-warning/10 border border-warning/30 rounded-lg p-4 mb-6">
         <AlertTriangle size={18} className="text-warning shrink-0 mt-0.5" />
         <p className="text-sm text-text-secondary">
-          Alteracoes aqui afetam apenas agendamentos e vendas criados dali em diante. Registros
-          ja existentes mantem os valores gravados no momento em que foram criados.
+          Alterações aqui afetam apenas agendamentos e vendas criados dali em diante. Registros
+          já existentes mantêm os valores gravados no momento em que foram criados.
         </p>
       </div>
 
@@ -86,7 +86,7 @@ export default function Settings() {
             Ingressos
           </h2>
 
-          <Field label="Preco do ingresso (R$ por pessoa)">
+          <Field label="Preço do ingresso (R$ por pessoa)">
             <input
               required
               type="number"
@@ -98,7 +98,7 @@ export default function Settings() {
             />
           </Field>
 
-          <Field label="Comissao do guia (R$ por pessoa)">
+          <Field label="Comissão do guia (R$ por pessoa)">
             <input
               required
               type="number"
@@ -113,10 +113,10 @@ export default function Settings() {
           </Field>
 
           <h2 className="text-sm font-medium text-text-secondary uppercase tracking-wide pt-2">
-            Cachaca
+            Cachaça
           </h2>
 
-          <Field label="Preco da cachaca (R$ por garrafa)">
+          <Field label="Preço da cachaça (R$ por garrafa)">
             <input
               required
               type="number"
@@ -128,7 +128,7 @@ export default function Settings() {
             />
           </Field>
 
-          <Field label="Comissao por venda (R$ por garrafa)">
+          <Field label="Comissão por venda (R$ por garrafa)">
             <input
               required
               type="number"

@@ -23,7 +23,7 @@ async function main() {
     create: { id: 1 },
   });
 
-  console.log(`Usuario seedado: ${user.email}`);
+  console.log(`Usuário seedado: ${user.email}`);
 }
 
 main()
