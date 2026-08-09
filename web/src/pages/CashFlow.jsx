@@ -13,15 +13,17 @@ import { PAYOUT_CATEGORY_LABELS } from '../lib/payoutCategory';
 function StatCard({ icon: Icon, label, value, highlight }) {
   return (
     <div
-      className={`border rounded-lg p-5 ${
+      className={`border rounded-lg p-5 h-full flex flex-col ${
         highlight ? 'bg-accent/10 border-accent' : 'bg-surface border-border'
       }`}
     >
-      <div className="flex items-center gap-2 text-text-secondary text-sm mb-2">
-        <Icon size={16} />
+      <div className="flex items-start gap-2 text-text-secondary text-sm mb-2">
+        <Icon size={16} className="shrink-0 mt-0.5" />
         <span>{label}</span>
       </div>
-      <p className={`font-display text-2xl ${highlight ? 'text-accent' : 'text-text-primary'}`}>
+      <p
+        className={`font-display text-2xl mt-auto ${highlight ? 'text-accent' : 'text-text-primary'}`}
+      >
         {value}
       </p>
     </div>

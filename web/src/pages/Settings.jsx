@@ -98,7 +98,7 @@ export default function Settings() {
             />
           </Field>
 
-          <Field label="Comissão do guia (R$ por pessoa)">
+          <Field label="Comissão guia (R$ por pessoa)">
             <input
               required
               type="number"

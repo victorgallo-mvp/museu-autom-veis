@@ -102,8 +102,8 @@ export default function Bookings() {
       'Grupo',
       'Responsável',
       'Telefone',
-      'Qtd prevista',
-      'Qtd real',
+      'Nr. prevista',
+      'Nr. real',
       'Valor total',
       'Status',
     ];
@@ -193,7 +193,7 @@ export default function Bookings() {
           className="flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium border border-border text-text-secondary hover:bg-surface-hover transition-colors"
         >
           <ArrowUpDown size={14} />
-          {sortOrder === 'asc' ? 'Mais antigo primeiro' : 'Mais novo primeiro'}
+          {sortOrder === 'asc' ? 'Mais novo primeiro' : 'Mais antigo primeiro'}
         </button>
       </div>
 

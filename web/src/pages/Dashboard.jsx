@@ -44,6 +44,7 @@ const FORECAST_OPTIONS = [
 
 const UPCOMING_OPTIONS = [
   { value: '7', label: '7 dias' },
+  { value: '14', label: '14 dias' },
   { value: '30', label: '30 dias' },
 ];
 
@@ -96,15 +97,17 @@ function computeForecastRange(preset) {
 function StatCard({ icon: Icon, label, value, highlight }) {
   return (
     <div
-      className={`border rounded-lg p-5 ${
+      className={`border rounded-lg p-5 h-full flex flex-col ${
         highlight ? 'bg-accent/10 border-accent' : 'bg-surface border-border'
       }`}
     >
-      <div className="flex items-center gap-2 text-text-secondary text-sm mb-2">
-        <Icon size={16} />
+      <div className="flex items-start gap-2 text-text-secondary text-sm mb-2">
+        <Icon size={16} className="shrink-0 mt-0.5" />
         <span>{label}</span>
       </div>
-      <p className={`font-display text-2xl ${highlight ? 'text-accent' : 'text-text-primary'}`}>
+      <p
+        className={`font-display text-2xl mt-auto ${highlight ? 'text-accent' : 'text-text-primary'}`}
+      >
         {value}
       </p>
     </div>
@@ -208,7 +211,7 @@ export default function Dashboard() {
 
       {data && (
         <>
-          <SectionHeading>Resumo</SectionHeading>
+          <SectionHeading>Resumo Geral</SectionHeading>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               icon={Wallet}
@@ -225,7 +228,7 @@ export default function Dashboard() {
             <StatCard icon={Receipt} label="Despesas" value={formatCurrency(data.expenses)} />
             <StatCard
               icon={Landmark}
-              label="Arrecadação da ONG"
+              label="Arrecadação ONG"
               value={formatCurrency(
                 data.visits.totals.revenue +
                   data.products.totals.revenue -
@@ -237,11 +240,11 @@ export default function Dashboard() {
 
           <SectionHeading>Resumo Visitas</SectionHeading>
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            <StatCard icon={Users} label="Qtd de visitantes" value={data.visits.totals.people} />
-            <StatCard icon={Boxes} label="Qtd de grupos" value={data.visits.counts.paid} />
+            <StatCard icon={Users} label="Nr. visitantes" value={data.visits.totals.people} />
+            <StatCard icon={Boxes} label="Nr. grupos" value={data.visits.counts.paid} />
             <StatCard
               icon={MapPinned}
-              label="Qtd de visitas"
+              label="Nr. visitas"
               value={data.visits.counts.visitCount}
             />
             <StatCard
@@ -251,7 +254,7 @@ export default function Dashboard() {
             />
             <StatCard
               icon={HandCoins}
-              label="Comissão do guia"
+              label="Comissão guia"
               value={formatCurrency(data.visits.totals.guideCommission)}
             />
             <StatCard
@@ -275,7 +278,7 @@ export default function Dashboard() {
             />
             <StatCard
               icon={HandCoins}
-              label="Comissão do guia"
+              label="Comissão guia"
               value={formatCurrency(data.products.totals.commission)}
             />
             <StatCard

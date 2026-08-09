@@ -256,7 +256,7 @@ export default function BookingForm() {
                 <p className="text-text-primary text-lg">{formatCurrency(total)}</p>
               </div>
               <div>
-                <p className="text-text-secondary">Comissão do guia</p>
+                <p className="text-text-secondary">Comissão guia</p>
                 <p className="text-text-primary text-lg">{formatCurrency(guideCommissionTotal)}</p>
               </div>
               <div>
