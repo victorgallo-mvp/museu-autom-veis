@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
 import { formatCurrency, formatDate, formatWeekday } from '../lib/format';
 import { CachacaSaleModal } from '../components/CachacaSaleModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { downloadCsv } from '../lib/csv';
 
 export default function CachacaSales() {
   const queryClient = useQueryClient();
@@ -48,18 +49,51 @@ export default function CachacaSales() {
     onError: () => toast.error('Erro ao excluir venda'),
   });
 
+  function handleExport() {
+    const headers = [
+      'Data',
+      'Dia da semana',
+      'Garrafas',
+      'Valor/garrafa',
+      'Total recebido',
+      'Comissão',
+      'Repasse à ONG',
+    ];
+    const rows = (sales ?? []).map((sale) => [
+      formatDate(sale.soldAt),
+      formatWeekday(sale.soldAt),
+      sale.bottleCount,
+      sale.unitPriceSnapshot,
+      sale.total,
+      sale.commissionTotal,
+      sale.ownerShareTotal,
+    ]);
+    downloadCsv('vendas-de-cachaca.csv', headers, rows);
+  }
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <h1 className="font-display text-3xl text-wine">Cachaças</h1>
-        <button
-          type="button"
-          onClick={() => setModal({ open: true, sale: null })}
-          className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-background font-medium px-4 py-2 rounded transition-colors"
-        >
-          <Plus size={18} />
-          Nova venda
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={!sales || sales.length === 0}
+            className="flex items-center gap-2 bg-surface border border-border hover:bg-surface-hover text-text-primary font-medium px-4 py-2 rounded transition-colors disabled:opacity-50"
+          >
+            <Download size={18} />
+            Exportar CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => setModal({ open: true, sale: null })}
+            className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-background font-medium px-4 py-2 rounded transition-colors"
+          >
+            <Plus size={18} />
+            Nova venda
+          </button>
+        </div>
       </div>
 
       <div className="bg-surface border border-border rounded-lg overflow-hidden">

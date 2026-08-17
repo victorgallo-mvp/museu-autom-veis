@@ -30,7 +30,7 @@ const PERIOD_OPTIONS = [
   { value: 'today', label: 'Hoje' },
   { value: 'week', label: 'Esta semana' },
   { value: 'month', label: 'Este mês' },
-  { value: 'lastMonth', label: 'Mês passado' },
+  { value: 'lastMonth', label: 'Mês anterior' },
   { value: 'allTime', label: 'Todo período' },
   { value: 'custom', label: 'Personalizado' },
 ];

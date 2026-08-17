@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { startOfDay, endOfDay } from 'date-fns';
 import { Plus, Pencil, Trash2, Search, Download, ArrowUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
@@ -51,8 +52,8 @@ export default function Bookings() {
 
   const filters = {
     status: selectedStatuses.length > 0 ? selectedStatuses.join(',') : undefined,
-    from: dateFrom || undefined,
-    to: dateTo || undefined,
+    from: dateFrom ? startOfDay(new Date(`${dateFrom}T00:00:00`)).toISOString() : undefined,
+    to: dateTo ? endOfDay(new Date(`${dateTo}T00:00:00`)).toISOString() : undefined,
     search: debouncedSearch || undefined,
   };
 

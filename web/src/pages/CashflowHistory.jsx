@@ -23,6 +23,7 @@ const PERIOD_OPTIONS = [
   { value: '7d', label: '7 dias' },
   { value: '14d', label: '14 dias' },
   { value: 'month', label: 'Este mês' },
+  { value: 'allTime', label: 'Todo período' },
   { value: 'custom', label: 'Personalizado' },
 ];
 
@@ -40,6 +41,8 @@ function computeRange(period, customRange) {
       return { from: startOfDay(subDays(now, 6)), to: endOfDay(now) };
     case '14d':
       return { from: startOfDay(subDays(now, 13)), to: endOfDay(now) };
+    case 'allTime':
+      return { from: new Date(2000, 0, 1), to: new Date(2100, 0, 1) };
     case 'custom':
       return {
         from: customRange.from
