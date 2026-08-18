@@ -194,6 +194,13 @@ export default function Dashboard() {
     },
   });
 
+  // Fallback para APIs antigas que ainda não retornam "photos" (evita quebrar o dashboard
+  // durante um deploy do backend em andamento/atrasado).
+  const photos = data?.photos ?? {
+    counts: { total: 0 },
+    totals: { sessions: 0, revenue: 0, commission: 0, ownerShare: 0 },
+  };
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
@@ -220,7 +227,7 @@ export default function Dashboard() {
               value={formatCurrency(
                 data.visits.totals.revenue +
                   data.products.totals.revenue +
-                  data.photos.totals.revenue
+                  photos.totals.revenue
               )}
             />
             <StatCard
@@ -229,7 +236,7 @@ export default function Dashboard() {
               value={formatCurrency(
                 data.visits.totals.guideCommission +
                   data.products.totals.commission +
-                  data.photos.totals.commission
+                  photos.totals.commission
               )}
             />
             <StatCard icon={Receipt} label="Despesas" value={formatCurrency(data.expenses)} />
@@ -239,10 +246,10 @@ export default function Dashboard() {
               value={formatCurrency(
                 data.visits.totals.revenue +
                   data.products.totals.revenue +
-                  data.photos.totals.revenue -
+                  photos.totals.revenue -
                   (data.visits.totals.guideCommission +
                     data.products.totals.commission +
-                    data.photos.totals.commission) -
+                    photos.totals.commission) -
                   data.expenses
               )}
             />
@@ -303,22 +310,22 @@ export default function Dashboard() {
             <StatCard
               icon={Camera}
               label="Sessões realizadas"
-              value={data.photos.totals.sessions}
+              value={photos.totals.sessions}
             />
             <StatCard
               icon={Wallet}
               label="Receita total"
-              value={formatCurrency(data.photos.totals.revenue)}
+              value={formatCurrency(photos.totals.revenue)}
             />
             <StatCard
               icon={HandCoins}
               label="Comissão"
-              value={formatCurrency(data.photos.totals.commission)}
+              value={formatCurrency(photos.totals.commission)}
             />
             <StatCard
               icon={Landmark}
               label="Arrecadação ONG"
-              value={formatCurrency(data.photos.totals.ownerShare)}
+              value={formatCurrency(photos.totals.ownerShare)}
             />
           </div>
 
