@@ -114,6 +114,31 @@ async function getProductsSummary(period) {
   };
 }
 
+async function getPhotosSummary(period) {
+  const periodSessions = await prisma.photoSession.findMany({
+    where: { sessionAt: { gte: period.from, lte: period.to } },
+  });
+
+  const totals = { sessions: 0, revenue: 0, commission: 0, ownerShare: 0 };
+
+  for (const session of periodSessions) {
+    const amount = Number(session.amount);
+    const commission = Number(session.commission);
+    const { total, commissionTotal, ownerShareTotal } = calcTotals(1, amount, commission);
+
+    totals.revenue = round2(totals.revenue + total);
+    totals.commission = round2(totals.commission + commissionTotal);
+    totals.ownerShare = round2(totals.ownerShare + ownerShareTotal);
+  }
+
+  totals.sessions = periodSessions.length;
+
+  return {
+    counts: { total: periodSessions.length },
+    totals,
+  };
+}
+
 async function getExpensesTotal(period) {
   const expenses = await prisma.expense.findMany({
     where: { paidAt: { gte: period.from, lte: period.to } },
@@ -129,13 +154,14 @@ async function getSummary({ from, to, upcomingDays }) {
   };
   const now = new Date();
 
-  const [visits, products, expenses] = await Promise.all([
+  const [visits, products, photos, expenses] = await Promise.all([
     getVisitsSummary(period, now, upcomingDays || DEFAULT_UPCOMING_DAYS),
     getProductsSummary(period),
+    getPhotosSummary(period),
     getExpensesTotal(period),
   ]);
 
-  return { period, visits, products, expenses };
+  return { period, visits, products, photos, expenses };
 }
 
 async function getForecast({ from, to }) {

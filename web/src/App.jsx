@@ -7,6 +7,7 @@ import Settings from './pages/Settings';
 import CashFlow from './pages/CashFlow';
 import CashflowHistory from './pages/CashflowHistory';
 import CachacaSales from './pages/CachacaSales';
+import PhotoSessions from './pages/PhotoSessions';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 
@@ -21,6 +22,7 @@ function App() {
           <Route path="/bookings/new" element={<BookingForm />} />
           <Route path="/bookings/:id/edit" element={<BookingForm />} />
           <Route path="/cachaca" element={<CachacaSales />} />
+          <Route path="/fotos" element={<PhotoSessions />} />
           <Route path="/cashflow" element={<CashFlow />} />
           <Route path="/cashflow/history" element={<CashflowHistory />} />
           <Route path="/settings" element={<Settings />} />

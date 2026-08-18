@@ -20,6 +20,7 @@ import {
   Boxes,
   ClipboardCheck,
   BottleWine,
+  Camera,
 } from 'lucide-react';
 import api from '../lib/api';
 import { formatCurrency, formatDateTime } from '../lib/format';
@@ -216,13 +217,19 @@ export default function Dashboard() {
             <StatCard
               icon={Wallet}
               label="Faturamento total"
-              value={formatCurrency(data.visits.totals.revenue + data.products.totals.revenue)}
+              value={formatCurrency(
+                data.visits.totals.revenue +
+                  data.products.totals.revenue +
+                  data.photos.totals.revenue
+              )}
             />
             <StatCard
               icon={HandCoins}
               label="Comissão total"
               value={formatCurrency(
-                data.visits.totals.guideCommission + data.products.totals.commission
+                data.visits.totals.guideCommission +
+                  data.products.totals.commission +
+                  data.photos.totals.commission
               )}
             />
             <StatCard icon={Receipt} label="Despesas" value={formatCurrency(data.expenses)} />
@@ -231,8 +238,11 @@ export default function Dashboard() {
               label="Arrecadação ONG"
               value={formatCurrency(
                 data.visits.totals.revenue +
-                  data.products.totals.revenue -
-                  (data.visits.totals.guideCommission + data.products.totals.commission) -
+                  data.products.totals.revenue +
+                  data.photos.totals.revenue -
+                  (data.visits.totals.guideCommission +
+                    data.products.totals.commission +
+                    data.photos.totals.commission) -
                   data.expenses
               )}
             />
@@ -285,6 +295,30 @@ export default function Dashboard() {
               icon={Landmark}
               label="Arrecadação ONG"
               value={formatCurrency(data.products.totals.ownerShare)}
+            />
+          </div>
+
+          <SectionHeading>Resumo Fotos</SectionHeading>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              icon={Camera}
+              label="Sessões realizadas"
+              value={data.photos.totals.sessions}
+            />
+            <StatCard
+              icon={Wallet}
+              label="Receita total"
+              value={formatCurrency(data.photos.totals.revenue)}
+            />
+            <StatCard
+              icon={HandCoins}
+              label="Comissão"
+              value={formatCurrency(data.photos.totals.commission)}
+            />
+            <StatCard
+              icon={Landmark}
+              label="Arrecadação ONG"
+              value={formatCurrency(data.photos.totals.ownerShare)}
             />
           </div>
 

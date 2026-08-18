@@ -9,6 +9,7 @@ const expensesRoutes = require('./routes/expensesRoutes');
 const payoutsRoutes = require('./routes/payoutsRoutes');
 const cashflowRoutes = require('./routes/cashflowRoutes');
 const cachacaSalesRoutes = require('./routes/cachacaSalesRoutes');
+const photoSessionsRoutes = require('./routes/photoSessionsRoutes');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/expenses', expensesRoutes);
 app.use('/payouts', payoutsRoutes);
 app.use('/cashflow', cashflowRoutes);
 app.use('/cachaca-sales', cachacaSalesRoutes);
+app.use('/photo-sessions', photoSessionsRoutes);
 
 app.use(errorHandler);
 

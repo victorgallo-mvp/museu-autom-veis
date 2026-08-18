@@ -4,6 +4,7 @@ const { serializeExpense } = require('./expensesService');
 const { serializePayout } = require('./payoutsService');
 const { serializeBooking } = require('./bookingsService');
 const { serializeSale } = require('./cachacaSalesService');
+const { serializeSession } = require('./photoSessionsService');
 
 const RECENT_LIMIT = 10;
 
@@ -18,9 +19,10 @@ function sumOwnerShare(items, getArgs) {
 }
 
 async function getAccrued() {
-  const [paidBookings, sales] = await Promise.all([
+  const [paidBookings, sales, sessions] = await Promise.all([
     prisma.booking.findMany({ where: { status: 'PAID' } }),
     prisma.cachacaSale.findMany(),
+    prisma.photoSession.findMany(),
   ]);
 
   const visitsAccrued = sumOwnerShare(paidBookings, (booking) => ({
@@ -35,11 +37,17 @@ async function getAccrued() {
     commission: Number(sale.commissionSnapshot),
   }));
 
-  return { visitsAccrued, productsAccrued };
+  const photosAccrued = sumOwnerShare(sessions, (session) => ({
+    count: 1,
+    unitPrice: Number(session.amount),
+    commission: Number(session.commission),
+  }));
+
+  return { visitsAccrued, productsAccrued, photosAccrued };
 }
 
 async function getSummary() {
-  const [{ visitsAccrued, productsAccrued }, expenses, payouts] = await Promise.all([
+  const [{ visitsAccrued, productsAccrued, photosAccrued }, expenses, payouts] = await Promise.all([
     getAccrued(),
     prisma.expense.findMany(),
     prisma.payout.findMany(),
@@ -47,20 +55,24 @@ async function getSummary() {
 
   const expensesTotal = round2(expenses.reduce((sum, e) => sum + Number(e.amount), 0));
 
-  const payoutsByCategory = { VISITS: 0, PRODUCTS: 0, GENERAL: 0 };
+  const payoutsByCategory = { VISITS: 0, PRODUCTS: 0, PHOTOS: 0, GENERAL: 0 };
   for (const payout of payouts) {
     payoutsByCategory[payout.category] += Number(payout.amount);
   }
   const visitsPayouts = round2(payoutsByCategory.VISITS);
   const productsPayouts = round2(payoutsByCategory.PRODUCTS);
+  const photosPayouts = round2(payoutsByCategory.PHOTOS);
   const generalPayouts = round2(payoutsByCategory.GENERAL);
-  const payoutsTotal = round2(visitsPayouts + productsPayouts + generalPayouts);
+  const payoutsTotal = round2(visitsPayouts + productsPayouts + photosPayouts + generalPayouts);
 
-  const accruedSum = visitsAccrued + productsAccrued;
-  const ratio = accruedSum > 0 ? visitsAccrued / accruedSum : 0;
+  const accruedSum = visitsAccrued + productsAccrued + photosAccrued;
+  const visitsRatio = accruedSum > 0 ? visitsAccrued / accruedSum : 0;
+  const productsRatio = accruedSum > 0 ? productsAccrued / accruedSum : 0;
+  const photosRatio = accruedSum > 0 ? photosAccrued / accruedSum : 0;
 
-  const pendingVisits = round2(visitsAccrued - visitsPayouts - generalPayouts * ratio);
-  const pendingProducts = round2(productsAccrued - productsPayouts - generalPayouts * (1 - ratio));
+  const pendingVisits = round2(visitsAccrued - visitsPayouts - generalPayouts * visitsRatio);
+  const pendingProducts = round2(productsAccrued - productsPayouts - generalPayouts * productsRatio);
+  const pendingPhotos = round2(photosAccrued - photosPayouts - generalPayouts * photosRatio);
 
   const balance = round2(accruedSum - expensesTotal - payoutsTotal);
 
@@ -73,6 +85,7 @@ async function getSummary() {
     totals: {
       visits: { accrued: visitsAccrued, payouts: visitsPayouts, pending: pendingVisits },
       products: { accrued: productsAccrued, payouts: productsPayouts, pending: pendingProducts },
+      photos: { accrued: photosAccrued, payouts: photosPayouts, pending: pendingPhotos },
       expenses: expensesTotal,
       payouts: payoutsTotal,
       balance,
@@ -88,12 +101,15 @@ async function getHistory({ from, to }) {
   if (to) dateFilter.lte = to;
   const hasFilter = Boolean(from || to);
 
-  const [paidBookings, sales, expenses, payouts] = await Promise.all([
+  const [paidBookings, sales, sessions, expenses, payouts] = await Promise.all([
     prisma.booking.findMany({
       where: { status: 'PAID', ...(hasFilter ? { scheduledAt: dateFilter } : {}) },
     }),
     prisma.cachacaSale.findMany({
       where: hasFilter ? { soldAt: dateFilter } : {},
+    }),
+    prisma.photoSession.findMany({
+      where: hasFilter ? { sessionAt: dateFilter } : {},
     }),
     prisma.expense.findMany({
       where: hasFilter ? { paidAt: dateFilter } : {},
@@ -127,6 +143,19 @@ async function getHistory({ from, to }) {
     });
   }
 
+  const eventTypeLabels = { WEDDING: 'Casamento', BIRTHDAY: 'Aniversário', OTHER: 'Outro' };
+
+  for (const session of sessions) {
+    const s = serializeSession(session);
+    events.push({
+      type: 'photo_session',
+      date: session.sessionAt,
+      description: `Sessão de fotos - ${eventTypeLabels[session.eventType]} (${s.clientName})`,
+      amount: s.ownerShareTotal,
+      direction: 'in',
+    });
+  }
+
   for (const expense of expenses) {
     events.push({
       type: 'expense',
@@ -138,9 +167,12 @@ async function getHistory({ from, to }) {
   }
 
   for (const payout of payouts) {
-    const categoryLabel = { VISITS: 'visitas', PRODUCTS: 'cachaça', GENERAL: 'geral' }[
-      payout.category
-    ];
+    const categoryLabel = {
+      VISITS: 'visitas',
+      PRODUCTS: 'cachaça',
+      PHOTOS: 'fotos',
+      GENERAL: 'geral',
+    }[payout.category];
     events.push({
       type: 'payout',
       date: payout.paidAt,

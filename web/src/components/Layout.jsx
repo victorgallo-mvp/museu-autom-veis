@@ -1,11 +1,20 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, BottleWine, Wallet, Settings, LogOut } from 'lucide-react';
+import {
+  LayoutDashboard,
+  CalendarDays,
+  BottleWine,
+  Camera,
+  Wallet,
+  Settings,
+  LogOut,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/bookings', label: 'Agendamentos', icon: CalendarDays },
   { to: '/cachaca', label: 'Cachaças', icon: BottleWine },
+  { to: '/fotos', label: 'Fotos', icon: Camera },
   { to: '/cashflow', label: 'Fluxo de Caixa', icon: Wallet },
   { to: '/settings', label: 'Configurações', icon: Settings },
 ];
