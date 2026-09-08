@@ -32,3 +32,30 @@ body {
   color: var(--color-text-primary);
   font-family: var(--font-sans);
 }
+
+/* Impressão do relatório: esconde navegação e controles, deixa só o conteúdo. */
+@media print {
+  body {
+    background-color: #ffffff;
+  }
+
+  aside,
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  .print-area {
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+
+  .report-section {
+    break-inside: avoid;
+  }
+}

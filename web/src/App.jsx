@@ -9,6 +9,7 @@ import CashflowHistory from './pages/CashflowHistory';
 import CachacaSales from './pages/CachacaSales';
 import PhotoSessions from './pages/PhotoSessions';
 import Souvenirs from './pages/Souvenirs';
+import Reports from './pages/Reports';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 
@@ -27,6 +28,7 @@ function App() {
           <Route path="/fotos" element={<PhotoSessions />} />
           <Route path="/cashflow" element={<CashFlow />} />
           <Route path="/cashflow/history" element={<CashflowHistory />} />
+          <Route path="/relatorio" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>

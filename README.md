@@ -2,6 +2,12 @@
 
 Sistema interno de agendamento de visitas, controle financeiro e calculo de comissao do guia para o museu de automoveis antigos em Carmo da Mata (MG).
 
+## Regras de negócio principais
+
+- **Ingressos por faixa etária**: adultos (13+) pagam inteira, crianças de 7 a 12 pagam meia (sempre metade do valor cheio configurado) e crianças até 6 anos não pagam. A comissão do guia é por pessoa pagante.
+- **Cachaças** e **Souvenirs** são módulos separados. Souvenirs tem catálogo configurável (nome, preço, comissão, ativo/inativo); cada venda congela os valores do produto no momento do registro. Produto com vendas não pode ser excluído, apenas desativado.
+- **Relatório**: a aba Relatório monta um resumo do período com as seções que o usuário escolher e permite enviar por WhatsApp, copiar o texto ou imprimir/salvar em PDF.
+
 ## Estrutura
 
 ```
@@ -85,6 +91,17 @@ Monorepo com dois projetos deployados separadamente a partir do mesmo repositori
    npx prisma migrate dev
    npm run seed
    ```
+
+### Atualizando o banco em produção
+
+A cada deploy que trouxer migrations novas (pasta `api/prisma/migrations`), aplicar no Postgres do Railway antes de subir a API:
+
+```bash
+cd api
+DATABASE_URL=<URL publica do Postgres do Railway> npx prisma migrate deploy
+```
+
+`migrate deploy` só aplica o que falta, sem gerar migrations nem resetar dados. Para desenvolver migrations localmente use um Postgres local (ex.: `createdb museu_dev`) e rode `npx prisma migrate dev` apontando `DATABASE_URL` para ele, nunca para o banco de produção.
 
 ### Frontend no Vercel
 

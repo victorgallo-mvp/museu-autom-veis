@@ -7,6 +7,7 @@ import {
   ShoppingBag,
   Camera,
   Wallet,
+  FileText,
   Settings,
   LogOut,
   Menu,
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { to: '/souvenirs', label: 'Souvenirs', icon: ShoppingBag },
   { to: '/fotos', label: 'Fotos', icon: Camera },
   { to: '/cashflow', label: 'Fluxo de Caixa', icon: Wallet },
+  { to: '/relatorio', label: 'Relatório', icon: FileText },
   { to: '/settings', label: 'Configurações', icon: Settings },
 ];
 
