@@ -10,6 +10,8 @@ const payoutsRoutes = require('./routes/payoutsRoutes');
 const cashflowRoutes = require('./routes/cashflowRoutes');
 const cachacaSalesRoutes = require('./routes/cachacaSalesRoutes');
 const photoSessionsRoutes = require('./routes/photoSessionsRoutes');
+const souvenirsRoutes = require('./routes/souvenirsRoutes');
+const souvenirSalesRoutes = require('./routes/souvenirSalesRoutes');
 
 const app = express();
 
@@ -29,6 +31,8 @@ app.use('/payouts', payoutsRoutes);
 app.use('/cashflow', cashflowRoutes);
 app.use('/cachaca-sales', cachacaSalesRoutes);
 app.use('/photo-sessions', photoSessionsRoutes);
+app.use('/souvenirs', souvenirsRoutes);
+app.use('/souvenir-sales', souvenirSalesRoutes);
 
 app.use(errorHandler);
 

@@ -20,6 +20,7 @@ import {
   Boxes,
   ClipboardCheck,
   BottleWine,
+  ShoppingBag,
   Camera,
 } from 'lucide-react';
 import api from '../lib/api';
@@ -208,6 +209,11 @@ export default function Dashboard() {
     counts: { total: 0 },
     totals: { sessions: 0, revenue: 0, commission: 0, ownerShare: 0 },
   };
+  const souvenirs = data?.souvenirs ?? {
+    counts: { total: 0 },
+    totals: { units: 0, revenue: 0, commission: 0, ownerShare: 0 },
+    byProduct: [],
+  };
 
   return (
     <div>
@@ -235,6 +241,7 @@ export default function Dashboard() {
               value={formatCurrency(
                 data.visits.totals.revenue +
                   data.products.totals.revenue +
+                  souvenirs.totals.revenue +
                   photos.totals.revenue
               )}
             />
@@ -244,6 +251,7 @@ export default function Dashboard() {
               value={formatCurrency(
                 data.visits.totals.guideCommission +
                   data.products.totals.commission +
+                  souvenirs.totals.commission +
                   photos.totals.commission
               )}
             />
@@ -254,9 +262,11 @@ export default function Dashboard() {
               value={formatCurrency(
                 data.visits.totals.revenue +
                   data.products.totals.revenue +
+                  souvenirs.totals.revenue +
                   photos.totals.revenue -
                   (data.visits.totals.guideCommission +
                     data.products.totals.commission +
+                    souvenirs.totals.commission +
                     photos.totals.commission) -
                   data.expenses
               )}
@@ -317,6 +327,58 @@ export default function Dashboard() {
               value={formatCurrency(data.products.totals.ownerShare)}
             />
           </div>
+
+          <SectionHeading>Resumo Souvenirs</SectionHeading>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              icon={ShoppingBag}
+              label="Unidades vendidas"
+              value={souvenirs.totals.units}
+            />
+            <StatCard
+              icon={Wallet}
+              label="Receita total"
+              value={formatCurrency(souvenirs.totals.revenue)}
+            />
+            <StatCard
+              icon={HandCoins}
+              label="Comissão"
+              value={formatCurrency(souvenirs.totals.commission)}
+            />
+            <StatCard
+              icon={Landmark}
+              label="Arrecadação ONG"
+              value={formatCurrency(souvenirs.totals.ownerShare)}
+            />
+          </div>
+          {souvenirs.byProduct.length > 0 && (
+            <div className="bg-surface border border-border rounded-lg overflow-hidden mt-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-text-secondary">
+                    <th className="px-4 py-2 font-medium">Produto</th>
+                    <th className="px-4 py-2 font-medium text-right">Unidades</th>
+                    <th className="px-4 py-2 font-medium text-right">Receita</th>
+                    <th className="px-4 py-2 font-medium text-right">Arrecadação ONG</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {souvenirs.byProduct.map((item) => (
+                    <tr key={item.souvenirId} className="border-b border-border last:border-0">
+                      <td className="px-4 py-2 text-text-primary">{item.name}</td>
+                      <td className="px-4 py-2 text-text-primary text-right">{item.units}</td>
+                      <td className="px-4 py-2 text-text-primary text-right whitespace-nowrap">
+                        {formatCurrency(item.revenue)}
+                      </td>
+                      <td className="px-4 py-2 text-text-primary text-right whitespace-nowrap">
+                        {formatCurrency(item.ownerShare)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           <SectionHeading>Resumo Fotos</SectionHeading>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

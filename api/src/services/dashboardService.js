@@ -123,6 +123,53 @@ async function getProductsSummary(period) {
   };
 }
 
+// Resumo de souvenirs no período, com totais gerais e por produto.
+async function getSouvenirsSummary(period) {
+  const periodSales = await prisma.souvenirSale.findMany({
+    where: { soldAt: { gte: period.from, lte: period.to } },
+    include: { souvenir: { select: { name: true } } },
+  });
+
+  const totals = { units: 0, revenue: 0, commission: 0, ownerShare: 0 };
+  const byProductMap = new Map();
+
+  for (const sale of periodSales) {
+    const { total, commissionTotal, ownerShareTotal } = calcTotals(
+      sale.quantity,
+      Number(sale.unitPriceSnapshot),
+      Number(sale.commissionSnapshot)
+    );
+
+    totals.units += sale.quantity;
+    totals.revenue = round2(totals.revenue + total);
+    totals.commission = round2(totals.commission + commissionTotal);
+    totals.ownerShare = round2(totals.ownerShare + ownerShareTotal);
+
+    const key = sale.souvenirId;
+    const entry = byProductMap.get(key) ?? {
+      souvenirId: key,
+      name: sale.souvenir?.name ?? sale.nameSnapshot,
+      units: 0,
+      revenue: 0,
+      commission: 0,
+      ownerShare: 0,
+    };
+    entry.units += sale.quantity;
+    entry.revenue = round2(entry.revenue + total);
+    entry.commission = round2(entry.commission + commissionTotal);
+    entry.ownerShare = round2(entry.ownerShare + ownerShareTotal);
+    byProductMap.set(key, entry);
+  }
+
+  const byProduct = [...byProductMap.values()].sort((a, b) => b.revenue - a.revenue);
+
+  return {
+    counts: { total: periodSales.length },
+    totals,
+    byProduct,
+  };
+}
+
 async function getPhotosSummary(period) {
   const periodSessions = await prisma.photoSession.findMany({
     where: { sessionAt: { gte: period.from, lte: period.to } },
@@ -163,14 +210,15 @@ async function getSummary({ from, to, upcomingDays }) {
   };
   const now = new Date();
 
-  const [visits, products, photos, expenses] = await Promise.all([
+  const [visits, products, souvenirs, photos, expenses] = await Promise.all([
     getVisitsSummary(period, now, upcomingDays || DEFAULT_UPCOMING_DAYS),
     getProductsSummary(period),
+    getSouvenirsSummary(period),
     getPhotosSummary(period),
     getExpensesTotal(period),
   ]);
 
-  return { period, visits, products, photos, expenses };
+  return { period, visits, products, souvenirs, photos, expenses };
 }
 
 async function getForecast({ from, to }) {

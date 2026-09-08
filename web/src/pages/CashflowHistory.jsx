@@ -11,6 +11,7 @@ import { PeriodSelector } from '../components/PeriodSelector';
 const TYPE_LABELS = {
   visit: 'Visita',
   product: 'Cachaça',
+  souvenir: 'Souvenir',
   photo_session: 'Sessão de fotos',
   expense: 'Despesa',
   payout: 'Repasse',

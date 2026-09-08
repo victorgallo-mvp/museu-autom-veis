@@ -69,6 +69,7 @@ enum PayoutCategory {
   VISITS
   PRODUCTS
   PHOTOS
+  SOUVENIRS
   GENERAL
 }
 
@@ -116,4 +117,35 @@ model PhotoSession {
   updatedAt   DateTime               @updatedAt
 
   @@index([sessionAt])
+}
+
+model Souvenir {
+  id         String         @id @default(uuid())
+  name       String
+  price      Decimal        @db.Decimal(10, 2)
+  commission Decimal        @default(0) @db.Decimal(10, 2)
+  active     Boolean        @default(true)
+  sortOrder  Int            @default(0)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  sales      SouvenirSale[]
+
+  @@index([active])
+}
+
+model SouvenirSale {
+  id                 String   @id @default(uuid())
+  souvenirId         String
+  souvenir           Souvenir @relation(fields: [souvenirId], references: [id])
+  nameSnapshot       String
+  soldAt             DateTime
+  quantity           Int
+  unitPriceSnapshot  Decimal  @db.Decimal(10, 2)
+  commissionSnapshot Decimal  @db.Decimal(10, 2)
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([soldAt])
+  @@index([souvenirId])
 }

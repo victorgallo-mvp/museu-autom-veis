@@ -5,6 +5,7 @@ const { serializePayout } = require('./payoutsService');
 const { serializeBooking, bookingAmounts } = require('./bookingsService');
 const { serializeSale } = require('./cachacaSalesService');
 const { serializeSession } = require('./photoSessionsService');
+const { serializeSouvenirSale } = require('./souvenirSalesService');
 
 const RECENT_LIMIT = 10;
 
@@ -19,9 +20,10 @@ function sumOwnerShare(items, getArgs) {
 }
 
 async function getAccrued() {
-  const [paidBookings, sales, sessions] = await Promise.all([
+  const [paidBookings, sales, souvenirSales, sessions] = await Promise.all([
     prisma.booking.findMany({ where: { status: 'PAID' } }),
     prisma.cachacaSale.findMany(),
+    prisma.souvenirSale.findMany(),
     prisma.photoSession.findMany(),
   ]);
 
@@ -35,42 +37,54 @@ async function getAccrued() {
     commission: Number(sale.commissionSnapshot),
   }));
 
+  const souvenirsAccrued = sumOwnerShare(souvenirSales, (sale) => ({
+    count: sale.quantity,
+    unitPrice: Number(sale.unitPriceSnapshot),
+    commission: Number(sale.commissionSnapshot),
+  }));
+
   const photosAccrued = sumOwnerShare(sessions, (session) => ({
     count: 1,
     unitPrice: Number(session.amount),
     commission: Number(session.commission),
   }));
 
-  return { visitsAccrued, productsAccrued, photosAccrued };
+  return { visitsAccrued, productsAccrued, souvenirsAccrued, photosAccrued };
 }
 
 async function getSummary() {
-  const [{ visitsAccrued, productsAccrued, photosAccrued }, expenses, payouts] = await Promise.all([
-    getAccrued(),
-    prisma.expense.findMany(),
-    prisma.payout.findMany(),
-  ]);
+  const [
+    { visitsAccrued, productsAccrued, souvenirsAccrued, photosAccrued },
+    expenses,
+    payouts,
+  ] = await Promise.all([getAccrued(), prisma.expense.findMany(), prisma.payout.findMany()]);
 
   const expensesTotal = round2(expenses.reduce((sum, e) => sum + Number(e.amount), 0));
 
-  const payoutsByCategory = { VISITS: 0, PRODUCTS: 0, PHOTOS: 0, GENERAL: 0 };
+  const payoutsByCategory = { VISITS: 0, PRODUCTS: 0, SOUVENIRS: 0, PHOTOS: 0, GENERAL: 0 };
   for (const payout of payouts) {
     payoutsByCategory[payout.category] += Number(payout.amount);
   }
   const visitsPayouts = round2(payoutsByCategory.VISITS);
   const productsPayouts = round2(payoutsByCategory.PRODUCTS);
+  const souvenirsPayouts = round2(payoutsByCategory.SOUVENIRS);
   const photosPayouts = round2(payoutsByCategory.PHOTOS);
   const generalPayouts = round2(payoutsByCategory.GENERAL);
-  const payoutsTotal = round2(visitsPayouts + productsPayouts + photosPayouts + generalPayouts);
+  const payoutsTotal = round2(
+    visitsPayouts + productsPayouts + souvenirsPayouts + photosPayouts + generalPayouts
+  );
 
-  const accruedSum = visitsAccrued + productsAccrued + photosAccrued;
-  const visitsRatio = accruedSum > 0 ? visitsAccrued / accruedSum : 0;
-  const productsRatio = accruedSum > 0 ? productsAccrued / accruedSum : 0;
-  const photosRatio = accruedSum > 0 ? photosAccrued / accruedSum : 0;
+  const accruedSum = visitsAccrued + productsAccrued + souvenirsAccrued + photosAccrued;
+  const ratio = (value) => (accruedSum > 0 ? value / accruedSum : 0);
 
-  const pendingVisits = round2(visitsAccrued - visitsPayouts - generalPayouts * visitsRatio);
-  const pendingProducts = round2(productsAccrued - productsPayouts - generalPayouts * productsRatio);
-  const pendingPhotos = round2(photosAccrued - photosPayouts - generalPayouts * photosRatio);
+  const pendingVisits = round2(visitsAccrued - visitsPayouts - generalPayouts * ratio(visitsAccrued));
+  const pendingProducts = round2(
+    productsAccrued - productsPayouts - generalPayouts * ratio(productsAccrued)
+  );
+  const pendingSouvenirs = round2(
+    souvenirsAccrued - souvenirsPayouts - generalPayouts * ratio(souvenirsAccrued)
+  );
+  const pendingPhotos = round2(photosAccrued - photosPayouts - generalPayouts * ratio(photosAccrued));
 
   const balance = round2(accruedSum - expensesTotal - payoutsTotal);
 
@@ -83,6 +97,11 @@ async function getSummary() {
     totals: {
       visits: { accrued: visitsAccrued, payouts: visitsPayouts, pending: pendingVisits },
       products: { accrued: productsAccrued, payouts: productsPayouts, pending: pendingProducts },
+      souvenirs: {
+        accrued: souvenirsAccrued,
+        payouts: souvenirsPayouts,
+        pending: pendingSouvenirs,
+      },
       photos: { accrued: photosAccrued, payouts: photosPayouts, pending: pendingPhotos },
       expenses: expensesTotal,
       payouts: payoutsTotal,
@@ -99,11 +118,14 @@ async function getHistory({ from, to }) {
   if (to) dateFilter.lte = to;
   const hasFilter = Boolean(from || to);
 
-  const [paidBookings, sales, sessions, expenses, payouts] = await Promise.all([
+  const [paidBookings, sales, souvenirSales, sessions, expenses, payouts] = await Promise.all([
     prisma.booking.findMany({
       where: { status: 'PAID', ...(hasFilter ? { scheduledAt: dateFilter } : {}) },
     }),
     prisma.cachacaSale.findMany({
+      where: hasFilter ? { soldAt: dateFilter } : {},
+    }),
+    prisma.souvenirSale.findMany({
       where: hasFilter ? { soldAt: dateFilter } : {},
     }),
     prisma.photoSession.findMany({
@@ -141,6 +163,17 @@ async function getHistory({ from, to }) {
     });
   }
 
+  for (const sale of souvenirSales) {
+    const s = serializeSouvenirSale(sale);
+    events.push({
+      type: 'souvenir',
+      date: sale.soldAt,
+      description: `Souvenir - ${s.quantity}x ${s.souvenirName}`,
+      amount: s.ownerShareTotal,
+      direction: 'in',
+    });
+  }
+
   const eventTypeLabels = { WEDDING: 'Casamento', BIRTHDAY: 'Aniversário', OTHER: 'Outro' };
 
   for (const session of sessions) {
@@ -168,6 +201,7 @@ async function getHistory({ from, to }) {
     const categoryLabel = {
       VISITS: 'visitas',
       PRODUCTS: 'cachaça',
+      SOUVENIRS: 'souvenirs',
       PHOTOS: 'fotos',
       GENERAL: 'geral',
     }[payout.category];
