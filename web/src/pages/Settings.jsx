@@ -106,7 +106,7 @@ export default function Settings() {
             (sempre metade do valor cheio). Crianças até 6 anos não pagam.
           </p>
 
-          <Field label="Comissão guia (R$ por pessoa pagante)">
+          <Field label="Comissão guia (R$ por adulto)">
             <input
               required
               type="number"
@@ -119,6 +119,14 @@ export default function Settings() {
               className={inputClass}
             />
           </Field>
+
+          <p className="text-xs text-text-secondary -mt-2">
+            Meia entrada gera metade da comissão:{' '}
+            <strong className="text-text-primary">
+              {formatCurrency(halfPriceOf(form.guideCommissionPerPerson))}
+            </strong>{' '}
+            por criança de 7 a 12. Crianças até 6 anos não geram comissão.
+          </p>
 
           <h2 className="text-sm font-medium text-text-secondary uppercase tracking-wide pt-2">
             Cachaça

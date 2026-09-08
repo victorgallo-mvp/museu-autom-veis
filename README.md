@@ -4,7 +4,7 @@ Sistema interno de agendamento de visitas, controle financeiro e calculo de comi
 
 ## Regras de negócio principais
 
-- **Ingressos por faixa etária**: adultos (13+) pagam inteira, crianças de 7 a 12 pagam meia (sempre metade do valor cheio configurado) e crianças até 6 anos não pagam. A comissão do guia é por pessoa pagante.
+- **Ingressos por faixa etária**: adultos (13+) pagam inteira, crianças de 7 a 12 pagam meia (sempre metade do valor cheio configurado) e crianças até 6 anos não pagam. A comissão do guia segue a mesma proporção: inteira por adulto, metade por criança de meia entrada e nada por criança até 6 anos.
 - **Cachaças** e **Souvenirs** são módulos separados. Souvenirs tem catálogo configurável (nome, preço, comissão, ativo/inativo); cada venda congela os valores do produto no momento do registro. Produto com vendas não pode ser excluído, apenas desativado.
 - **Relatório**: a aba Relatório monta um resumo do período com as seções que o usuário escolher e permite enviar por WhatsApp, copiar o texto ou imprimir/salvar em PDF.
 
