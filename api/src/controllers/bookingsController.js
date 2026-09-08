@@ -9,7 +9,11 @@ const bookingInputSchema = z.object({
   responsiblePhone: z.string().min(1),
   scheduledAt: z.coerce.date(),
   expectedPeopleCount: z.number().int().positive(),
+  expectedChildrenHalf: z.number().int().nonnegative().optional().default(0),
+  expectedChildrenFree: z.number().int().nonnegative().optional().default(0),
   actualPeopleCount: z.number().int().nonnegative().optional().nullable(),
+  actualChildrenHalf: z.number().int().nonnegative().optional(),
+  actualChildrenFree: z.number().int().nonnegative().optional(),
   notes: z.string().optional().nullable(),
   status: z.enum(STATUS_VALUES).optional().default('PENDING'),
 });
@@ -17,6 +21,8 @@ const bookingInputSchema = z.object({
 const statusSchema = z.object({
   status: z.enum(STATUS_VALUES),
   actualPeopleCount: z.number().int().nonnegative().optional(),
+  actualChildrenHalf: z.number().int().nonnegative().optional(),
+  actualChildrenFree: z.number().int().nonnegative().optional(),
 });
 
 const listQuerySchema = z.object({
@@ -57,8 +63,8 @@ async function update(req, res) {
 }
 
 async function updateStatus(req, res) {
-  const { status, actualPeopleCount } = statusSchema.parse(req.body);
-  const booking = await bookingsService.updateBookingStatus(req.params.id, status, actualPeopleCount);
+  const { status, ...actual } = statusSchema.parse(req.body);
+  const booking = await bookingsService.updateBookingStatus(req.params.id, status, actual);
   res.json(booking);
 }
 

@@ -1,6 +1,7 @@
 const prisma = require('../lib/prisma');
 const { calcTotals, round2 } = require('../lib/money');
-const { serializeBooking } = require('./bookingsService');
+const { serializeBooking, bookingAmounts } = require('./bookingsService');
+const { effectiveCounts } = require('../lib/bookingCounts');
 
 const DEFAULT_UPCOMING_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -13,23 +14,31 @@ function defaultPeriod() {
 }
 
 function emptyAmounts() {
-  return { people: 0, revenue: 0, guideCommission: 0, ownerShare: 0 };
+  return {
+    people: 0,
+    adults: 0,
+    childrenHalf: 0,
+    childrenFree: 0,
+    paying: 0,
+    revenue: 0,
+    guideCommission: 0,
+    ownerShare: 0,
+  };
 }
 
 function effectiveCount(booking) {
-  return booking.actualPeopleCount ?? booking.expectedPeopleCount;
+  return effectiveCounts(booking).total;
 }
 
 function accumulate(amounts, booking) {
-  const ticketPriceSnapshot = Number(booking.ticketPriceSnapshot);
-  const guideCommissionSnapshot = Number(booking.guideCommissionSnapshot);
-  const { total, commissionTotal, ownerShareTotal } = calcTotals(
-    effectiveCount(booking),
-    ticketPriceSnapshot,
-    guideCommissionSnapshot
-  );
+  const { counts, total, commissionTotal, ownerShareTotal, payingCount } =
+    bookingAmounts(booking);
 
-  amounts.people += effectiveCount(booking);
+  amounts.people += counts.total;
+  amounts.adults += counts.adults;
+  amounts.childrenHalf += counts.childrenHalf;
+  amounts.childrenFree += counts.childrenFree;
+  amounts.paying += payingCount;
   amounts.revenue = round2(amounts.revenue + total);
   amounts.guideCommission = round2(amounts.guideCommission + commissionTotal);
   amounts.ownerShare = round2(amounts.ownerShare + ownerShareTotal);

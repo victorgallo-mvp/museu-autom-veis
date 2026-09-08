@@ -26,6 +26,7 @@ import api from '../lib/api';
 import { formatCurrency, formatDateTime } from '../lib/format';
 import { StatusBadge } from '../components/StatusBadge';
 import { PeriodSelector } from '../components/PeriodSelector';
+import { formatBreakdown } from '../lib/visitPricing';
 
 const PERIOD_OPTIONS = [
   { value: 'today', label: 'Hoje' },
@@ -95,7 +96,7 @@ function computeForecastRange(preset) {
   }
 }
 
-function StatCard({ icon: Icon, label, value, highlight }) {
+function StatCard({ icon: Icon, label, value, sub, highlight }) {
   return (
     <div
       className={`border rounded-lg p-5 h-full flex flex-col ${
@@ -111,6 +112,7 @@ function StatCard({ icon: Icon, label, value, highlight }) {
       >
         {value}
       </p>
+      {sub && <p className="text-text-secondary text-xs mt-1">{sub}</p>}
     </div>
   );
 }
@@ -132,6 +134,12 @@ function BookingList({ title, bookings, emptyLabel, extra }) {
                 <p className="text-text-primary text-sm font-medium">{booking.groupName}</p>
                 <p className="text-text-secondary text-xs">
                   {formatDateTime(booking.scheduledAt)} - {booking.expectedPeopleCount} pessoas
+                  {(booking.expectedChildrenHalf > 0 || booking.expectedChildrenFree > 0) &&
+                    ` (${formatBreakdown({
+                      adults: booking.expectedAdults,
+                      childrenHalf: booking.expectedChildrenHalf,
+                      childrenFree: booking.expectedChildrenFree,
+                    })})`}
                 </p>
               </div>
               <StatusBadge status={booking.status} />
@@ -257,7 +265,12 @@ export default function Dashboard() {
 
           <SectionHeading>Resumo Visitas</SectionHeading>
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            <StatCard icon={Users} label="Nr. visitantes" value={data.visits.totals.people} />
+            <StatCard
+              icon={Users}
+              label="Nr. visitantes"
+              value={data.visits.totals.people}
+              sub={formatBreakdown(data.visits.totals)}
+            />
             <StatCard icon={Boxes} label="Nr. grupos" value={data.visits.counts.paid} />
             <StatCard
               icon={MapPinned}
@@ -349,6 +362,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-text-secondary">Pessoas previstas</p>
                   <p className="text-text-primary text-lg">{forecast.people}</p>
+                  <p className="text-text-secondary text-xs">{formatBreakdown(forecast)}</p>
                 </div>
                 <div>
                   <p className="text-text-secondary">Receita prevista</p>

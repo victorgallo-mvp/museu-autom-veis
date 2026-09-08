@@ -4,17 +4,22 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
-import { formatCurrency, round2, toDatetimeLocal } from '../lib/format';
+import { formatCurrency, toDatetimeLocal } from '../lib/format';
 import { formatPhone, unmaskPhone } from '../lib/phone';
 import { STATUS_LABELS, STATUS_OPTIONS } from '../lib/bookingStatus';
+import { calcVisitTotals } from '../lib/visitPricing';
 
 const EMPTY_FORM = {
   groupName: '',
   responsibleName: '',
   responsiblePhone: '',
   scheduledAt: '',
-  expectedPeopleCount: 1,
-  actualPeopleCount: '',
+  expectedAdults: 1,
+  expectedChildrenHalf: 0,
+  expectedChildrenFree: 0,
+  actualAdults: '',
+  actualChildrenHalf: '',
+  actualChildrenFree: '',
   notes: '',
   status: 'PENDING',
 };
@@ -28,6 +33,51 @@ function Field({ label, children }) {
       <span className="block text-sm text-text-secondary mb-1">{label}</span>
       {children}
     </label>
+  );
+}
+
+function toCount(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+
+// Três campos de contagem (adultos, crianças 7-12, crianças até 6).
+function CountFields({ title, prefix, form, setForm, disabled, placeholders }) {
+  const fields = [
+    { key: 'Adults', label: 'Adultos (13+)' },
+    { key: 'ChildrenHalf', label: 'Crianças 7 a 12 (meia)' },
+    { key: 'ChildrenFree', label: 'Crianças até 6 (grátis)' },
+  ];
+
+  const total = fields.reduce((sum, { key }) => sum + toCount(form[`${prefix}${key}`]), 0);
+
+  return (
+    <div className="sm:col-span-2 bg-background border border-border rounded-lg p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm text-text-secondary">{title}</h2>
+        <span className="text-sm text-text-primary">
+          Total: <strong>{total}</strong>
+        </span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {fields.map(({ key, label }) => {
+          const name = `${prefix}${key}`;
+          return (
+            <Field key={name} label={label}>
+              <input
+                type="number"
+                min="0"
+                disabled={disabled}
+                placeholder={placeholders ? String(placeholders[key] ?? 0) : undefined}
+                value={form[name]}
+                onChange={(e) => setForm((f) => ({ ...f, [name]: e.target.value }))}
+                className={`${inputClass} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              />
+            </Field>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -65,8 +115,12 @@ export default function BookingForm() {
         responsibleName: booking.responsibleName,
         responsiblePhone: formatPhone(booking.responsiblePhone),
         scheduledAt: toDatetimeLocal(booking.scheduledAt),
-        expectedPeopleCount: booking.expectedPeopleCount,
-        actualPeopleCount: booking.actualPeopleCount ?? '',
+        expectedAdults: booking.expectedAdults,
+        expectedChildrenHalf: booking.expectedChildrenHalf,
+        expectedChildrenFree: booking.expectedChildrenFree,
+        actualAdults: booking.actualAdults ?? '',
+        actualChildrenHalf: booking.actualChildrenHalf ?? '',
+        actualChildrenFree: booking.actualChildrenFree ?? '',
         notes: booking.notes ?? '',
         status: booking.status,
       });
@@ -94,17 +148,56 @@ export default function BookingForm() {
       toast.success(isEdit ? 'Agendamento atualizado' : 'Agendamento criado');
       navigate('/bookings');
     },
-    onError: () => toast.error('Erro ao salvar agendamento'),
+    onError: (error) =>
+      toast.error(error?.response?.data?.error ?? 'Erro ao salvar agendamento'),
   });
+
+  const expected = {
+    adults: toCount(form.expectedAdults),
+    childrenHalf: toCount(form.expectedChildrenHalf),
+    childrenFree: toCount(form.expectedChildrenFree),
+  };
+  const expectedTotal = expected.adults + expected.childrenHalf + expected.childrenFree;
+
+  const actualFilled =
+    form.actualAdults !== '' || form.actualChildrenHalf !== '' || form.actualChildrenFree !== '';
+  const actual = {
+    adults: toCount(form.actualAdults),
+    childrenHalf: toCount(form.actualChildrenHalf),
+    childrenFree: toCount(form.actualChildrenFree),
+  };
+
+  function handleStatusChange(status) {
+    setForm((f) => {
+      const next = { ...f, status };
+      // Ao marcar como pago, pré-preenche a contagem real com a prevista.
+      if (status === 'PAID' && !actualFilled) {
+        next.actualAdults = expected.adults;
+        next.actualChildrenHalf = expected.childrenHalf;
+        next.actualChildrenFree = expected.childrenFree;
+      }
+      return next;
+    });
+  }
 
   function handleSubmit(e) {
     e.preventDefault();
 
-    let actualPeopleCount;
+    if (expectedTotal < 1) {
+      toast.error('Informe pelo menos uma pessoa na quantidade prevista');
+      return;
+    }
+
+    let actualPayload = {};
     if (form.status === 'NO_SHOW') {
-      actualPeopleCount = 0;
+      actualPayload = { actualPeopleCount: 0, actualChildrenHalf: 0, actualChildrenFree: 0 };
     } else if (form.status === 'PAID') {
-      actualPeopleCount = form.actualPeopleCount === '' ? undefined : Number(form.actualPeopleCount);
+      const source = actualFilled ? actual : expected;
+      actualPayload = {
+        actualPeopleCount: source.adults + source.childrenHalf + source.childrenFree,
+        actualChildrenHalf: source.childrenHalf,
+        actualChildrenFree: source.childrenFree,
+      };
     }
 
     mutation.mutate({
@@ -112,24 +205,24 @@ export default function BookingForm() {
       responsibleName: form.responsibleName,
       responsiblePhone: unmaskPhone(form.responsiblePhone),
       scheduledAt: new Date(form.scheduledAt).toISOString(),
-      expectedPeopleCount: Number(form.expectedPeopleCount),
-      actualPeopleCount,
+      expectedPeopleCount: expectedTotal,
+      expectedChildrenHalf: expected.childrenHalf,
+      expectedChildrenFree: expected.childrenFree,
+      ...actualPayload,
       notes: form.notes || undefined,
       status: form.status,
     });
   }
 
-  const expectedPeopleCount = Number(form.expectedPeopleCount) || 0;
-  const effectiveCount =
+  const effective =
     form.status === 'NO_SHOW'
-      ? 0
-      : form.status === 'PAID' && form.actualPeopleCount !== ''
-        ? Number(form.actualPeopleCount)
-        : expectedPeopleCount;
+      ? { adults: 0, childrenHalf: 0, childrenFree: 0 }
+      : form.status === 'PAID' && actualFilled
+        ? actual
+        : expected;
 
-  const total = round2(effectiveCount * Number(prices.ticketPrice));
-  const guideCommissionTotal = round2(effectiveCount * Number(prices.guideCommissionPerPerson));
-  const ownerShareTotal = round2(total - guideCommissionTotal);
+  const { total, guideCommissionTotal, ownerShareTotal, halfPrice, payingCount } =
+    calcVisitTotals(effective, prices.ticketPrice, prices.guideCommissionPerPerson);
 
   const loading = isEdit ? loadingBooking : loadingSettings;
 
@@ -191,20 +284,18 @@ export default function BookingForm() {
                 className={inputClass}
               />
             </Field>
-            <Field label="Quantidade prevista">
-              <input
-                required
-                type="number"
-                min="1"
-                value={form.expectedPeopleCount}
-                onChange={(e) => setForm((f) => ({ ...f, expectedPeopleCount: e.target.value }))}
-                className={inputClass}
-              />
-            </Field>
+
+            <CountFields
+              title="Quantidade prevista"
+              prefix="expected"
+              form={form}
+              setForm={setForm}
+            />
+
             <Field label="Status">
               <select
                 value={form.status}
-                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
+                onChange={(e) => handleStatusChange(e.target.value)}
                 className={inputClass}
               >
                 {STATUS_OPTIONS.map((value) => (
@@ -216,16 +307,17 @@ export default function BookingForm() {
             </Field>
 
             {form.status === 'PAID' && (
-              <Field label="Quantidade real (quem de fato compareceu)">
-                <input
-                  type="number"
-                  min="0"
-                  placeholder={String(expectedPeopleCount)}
-                  value={form.actualPeopleCount}
-                  onChange={(e) => setForm((f) => ({ ...f, actualPeopleCount: e.target.value }))}
-                  className={inputClass}
-                />
-              </Field>
+              <CountFields
+                title="Quantidade real (quem de fato compareceu)"
+                prefix="actual"
+                form={form}
+                setForm={setForm}
+                placeholders={{
+                  Adults: expected.adults,
+                  ChildrenHalf: expected.childrenHalf,
+                  ChildrenFree: expected.childrenFree,
+                }}
+              />
             )}
 
             {form.status === 'NO_SHOW' && (
@@ -249,7 +341,13 @@ export default function BookingForm() {
           </Field>
 
           <div className="bg-background border border-border rounded-lg p-4">
-            <h2 className="text-sm text-text-secondary mb-3">Resumo</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h2 className="text-sm text-text-secondary">Resumo</h2>
+              <p className="text-xs text-text-secondary">
+                Inteira {formatCurrency(prices.ticketPrice)} · Meia {formatCurrency(halfPrice)} ·{' '}
+                {payingCount} pagante{payingCount === 1 ? '' : 's'}
+              </p>
+            </div>
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <p className="text-text-secondary">Valor total</p>

@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
+import { formatCurrency } from '../lib/format';
+import { halfPriceOf } from '../lib/visitPricing';
 
 const inputClass =
   'w-full bg-background border border-border rounded px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent';
@@ -98,7 +100,13 @@ export default function Settings() {
             />
           </Field>
 
-          <Field label="Comissão guia (R$ por pessoa)">
+          <p className="text-xs text-text-secondary -mt-2">
+            Crianças de 7 a 12 anos pagam meia entrada:{' '}
+            <strong className="text-text-primary">{formatCurrency(halfPriceOf(form.ticketPrice))}</strong>{' '}
+            (sempre metade do valor cheio). Crianças até 6 anos não pagam.
+          </p>
+
+          <Field label="Comissão guia (R$ por pessoa pagante)">
             <input
               required
               type="number"

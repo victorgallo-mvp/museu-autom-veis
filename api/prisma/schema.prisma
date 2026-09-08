@@ -30,7 +30,11 @@ model Booking {
   responsiblePhone        String
   scheduledAt             DateTime
   expectedPeopleCount     Int           @map("peopleCount")
+  expectedChildrenHalf    Int           @default(0)
+  expectedChildrenFree    Int           @default(0)
   actualPeopleCount       Int?
+  actualChildrenHalf      Int           @default(0)
+  actualChildrenFree      Int           @default(0)
   ticketPriceSnapshot     Decimal       @db.Decimal(10, 2)
   guideCommissionSnapshot Decimal       @db.Decimal(10, 2)
   status                  BookingStatus @default(PENDING)

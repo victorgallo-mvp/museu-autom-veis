@@ -9,6 +9,7 @@ import { formatCurrency, formatDateTime } from '../lib/format';
 import { STATUS_LABELS, STATUS_OPTIONS } from '../lib/bookingStatus';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { downloadCsv } from '../lib/csv';
+import { formatBreakdown } from '../lib/visitPricing';
 
 function useDebouncedValue(value, delayMs) {
   const [debounced, setDebounced] = useState(value);
@@ -104,7 +105,13 @@ export default function Bookings() {
       'Responsável',
       'Telefone',
       'Nr. prevista',
+      'Adultos previstos',
+      'Crianças 7-12 previstas',
+      'Crianças até 6 previstas',
       'Nr. real',
+      'Adultos reais',
+      'Crianças 7-12 reais',
+      'Crianças até 6 reais',
       'Valor total',
       'Status',
     ];
@@ -114,7 +121,13 @@ export default function Bookings() {
       booking.responsibleName,
       booking.responsiblePhone,
       booking.expectedPeopleCount,
+      booking.expectedAdults,
+      booking.expectedChildrenHalf,
+      booking.expectedChildrenFree,
       booking.actualPeopleCount ?? '',
+      booking.actualAdults ?? '',
+      booking.actualChildrenHalf ?? '',
+      booking.actualChildrenFree ?? '',
       booking.total,
       STATUS_LABELS[booking.status],
     ]);
@@ -241,12 +254,29 @@ export default function Bookings() {
                   </td>
                   <td className="px-4 py-3 text-text-primary">{booking.groupName}</td>
                   <td className="px-4 py-3 text-text-secondary">{booking.responsibleName}</td>
-                  <td className="px-4 py-3 text-text-primary text-right">
+                  <td className="px-4 py-3 text-text-primary text-right whitespace-nowrap">
                     {booking.expectedPeopleCount}
+                    {(booking.expectedChildrenHalf > 0 || booking.expectedChildrenFree > 0) && (
+                      <span className="text-text-secondary text-xs block">
+                        {formatBreakdown({
+                          adults: booking.expectedAdults,
+                          childrenHalf: booking.expectedChildrenHalf,
+                          childrenFree: booking.expectedChildrenFree,
+                        })}
+                      </span>
+                    )}
                     {booking.actualPeopleCount !== null &&
-                      booking.actualPeopleCount !== booking.expectedPeopleCount && (
+                      (booking.actualPeopleCount !== booking.expectedPeopleCount ||
+                        booking.actualChildrenHalf !== booking.expectedChildrenHalf ||
+                        booking.actualChildrenFree !== booking.expectedChildrenFree) && (
                         <span className="text-text-secondary text-xs block">
                           real: {booking.actualPeopleCount}
+                          {booking.actualPeopleCount > 0 &&
+                            ` (${formatBreakdown({
+                              adults: booking.actualAdults,
+                              childrenHalf: booking.actualChildrenHalf,
+                              childrenFree: booking.actualChildrenFree,
+                            })})`}
                         </span>
                       )}
                   </td>

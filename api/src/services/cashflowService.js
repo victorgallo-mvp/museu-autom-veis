@@ -2,7 +2,7 @@ const prisma = require('../lib/prisma');
 const { calcTotals, round2 } = require('../lib/money');
 const { serializeExpense } = require('./expensesService');
 const { serializePayout } = require('./payoutsService');
-const { serializeBooking } = require('./bookingsService');
+const { serializeBooking, bookingAmounts } = require('./bookingsService');
 const { serializeSale } = require('./cachacaSalesService');
 const { serializeSession } = require('./photoSessionsService');
 
@@ -25,11 +25,9 @@ async function getAccrued() {
     prisma.photoSession.findMany(),
   ]);
 
-  const visitsAccrued = sumOwnerShare(paidBookings, (booking) => ({
-    count: booking.actualPeopleCount ?? booking.expectedPeopleCount,
-    unitPrice: Number(booking.ticketPriceSnapshot),
-    commission: Number(booking.guideCommissionSnapshot),
-  }));
+  const visitsAccrued = round2(
+    paidBookings.reduce((sum, booking) => sum + bookingAmounts(booking).ownerShareTotal, 0)
+  );
 
   const productsAccrued = sumOwnerShare(sales, (sale) => ({
     count: sale.bottleCount,

@@ -1,20 +1,27 @@
 const prisma = require('../lib/prisma');
 const AppError = require('../lib/AppError');
 const settingsService = require('./settingsService');
-const { calcTotals } = require('../lib/money');
+const { calcVisitTotals } = require('../lib/money');
+const { expectedCounts, actualCounts, effectiveCounts } = require('../lib/bookingCounts');
 
-function effectiveCount(booking) {
-  return booking.actualPeopleCount ?? booking.expectedPeopleCount;
+// Totais financeiros de um agendamento (usa a contagem real quando existe).
+function bookingAmounts(booking) {
+  const counts = effectiveCounts(booking);
+  const totals = calcVisitTotals(
+    counts,
+    Number(booking.ticketPriceSnapshot),
+    Number(booking.guideCommissionSnapshot)
+  );
+  return { counts, ...totals };
 }
 
 function serialize(booking) {
   const ticketPriceSnapshot = Number(booking.ticketPriceSnapshot);
   const guideCommissionSnapshot = Number(booking.guideCommissionSnapshot);
-  const { total, commissionTotal, ownerShareTotal } = calcTotals(
-    effectiveCount(booking),
-    ticketPriceSnapshot,
-    guideCommissionSnapshot
-  );
+  const { counts, total, commissionTotal, ownerShareTotal, halfPrice, payingCount } =
+    bookingAmounts(booking);
+  const expected = expectedCounts(booking);
+  const actual = actualCounts(booking);
 
   return {
     id: booking.id,
@@ -23,8 +30,17 @@ function serialize(booking) {
     responsiblePhone: booking.responsiblePhone,
     scheduledAt: booking.scheduledAt,
     expectedPeopleCount: booking.expectedPeopleCount,
+    expectedAdults: expected.adults,
+    expectedChildrenHalf: expected.childrenHalf,
+    expectedChildrenFree: expected.childrenFree,
     actualPeopleCount: booking.actualPeopleCount,
+    actualAdults: actual ? actual.adults : null,
+    actualChildrenHalf: actual ? actual.childrenHalf : null,
+    actualChildrenFree: actual ? actual.childrenFree : null,
+    counts,
+    payingCount,
     ticketPriceSnapshot,
+    halfTicketPriceSnapshot: halfPrice,
     guideCommissionSnapshot,
     total,
     guideCommissionTotal: commissionTotal,
@@ -59,6 +75,45 @@ function buildWhere({ status, from, to, search }) {
   return where;
 }
 
+function assertBreakdown(total, childrenHalf, childrenFree, label) {
+  if (childrenHalf + childrenFree > total) {
+    throw new AppError(
+      `A soma de crianças não pode ser maior que a quantidade ${label} de pessoas`,
+      400
+    );
+  }
+}
+
+// Monta os campos de contagem real a partir do payload. Quando o total real não
+// vem, não mexemos nas contagens reais (undefined = Prisma ignora o campo).
+function actualFields(data) {
+  if (data.actualPeopleCount === undefined) {
+    return {};
+  }
+  if (data.actualPeopleCount === null) {
+    return { actualPeopleCount: null, actualChildrenHalf: 0, actualChildrenFree: 0 };
+  }
+  const childrenHalf = data.actualChildrenHalf ?? 0;
+  const childrenFree = data.actualChildrenFree ?? 0;
+  assertBreakdown(data.actualPeopleCount, childrenHalf, childrenFree, 'real');
+  return {
+    actualPeopleCount: data.actualPeopleCount,
+    actualChildrenHalf: childrenHalf,
+    actualChildrenFree: childrenFree,
+  };
+}
+
+function expectedFields(data) {
+  const childrenHalf = data.expectedChildrenHalf ?? 0;
+  const childrenFree = data.expectedChildrenFree ?? 0;
+  assertBreakdown(data.expectedPeopleCount, childrenHalf, childrenFree, 'prevista');
+  return {
+    expectedPeopleCount: data.expectedPeopleCount,
+    expectedChildrenHalf: childrenHalf,
+    expectedChildrenFree: childrenFree,
+  };
+}
+
 async function listBookings(filters) {
   const bookings = await prisma.booking.findMany({
     where: buildWhere(filters),
@@ -87,8 +142,8 @@ async function createBooking(data) {
       responsibleName: data.responsibleName,
       responsiblePhone: data.responsiblePhone,
       scheduledAt: data.scheduledAt,
-      expectedPeopleCount: data.expectedPeopleCount,
-      actualPeopleCount: data.actualPeopleCount,
+      ...expectedFields(data),
+      ...actualFields(data),
       notes: data.notes,
       status: data.status,
       ticketPriceSnapshot: settings.ticketPrice,
@@ -109,8 +164,8 @@ async function updateBooking(id, data) {
       responsibleName: data.responsibleName,
       responsiblePhone: data.responsiblePhone,
       scheduledAt: data.scheduledAt,
-      expectedPeopleCount: data.expectedPeopleCount,
-      actualPeopleCount: data.actualPeopleCount,
+      ...expectedFields(data),
+      ...actualFields(data),
       notes: data.notes,
       status: data.status,
     },
@@ -119,7 +174,7 @@ async function updateBooking(id, data) {
   return serialize(booking);
 }
 
-async function updateBookingStatus(id, status, actualPeopleCount) {
+async function updateBookingStatus(id, status, actual = {}) {
   const existing = await prisma.booking.findUnique({ where: { id } });
 
   if (!existing) {
@@ -129,9 +184,18 @@ async function updateBookingStatus(id, status, actualPeopleCount) {
   const data = { status };
 
   if (status === 'PAID') {
-    data.actualPeopleCount = actualPeopleCount ?? existing.expectedPeopleCount;
+    if (actual.actualPeopleCount === undefined) {
+      // Sem contagem real informada: assume que veio exatamente o previsto.
+      data.actualPeopleCount = existing.expectedPeopleCount;
+      data.actualChildrenHalf = existing.expectedChildrenHalf;
+      data.actualChildrenFree = existing.expectedChildrenFree;
+    } else {
+      Object.assign(data, actualFields(actual));
+    }
   } else if (status === 'NO_SHOW') {
     data.actualPeopleCount = 0;
+    data.actualChildrenHalf = 0;
+    data.actualChildrenFree = 0;
   }
 
   const booking = await prisma.booking.update({ where: { id }, data });
@@ -152,4 +216,5 @@ module.exports = {
   updateBookingStatus,
   deleteBooking,
   serializeBooking: serialize,
+  bookingAmounts,
 };
