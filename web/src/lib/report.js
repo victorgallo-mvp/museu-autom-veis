@@ -30,18 +30,38 @@ export function isSectionOn(selected, key) {
   return Boolean(selected[key]);
 }
 
-export function periodLabel(period) {
+export function periodLabel(period, { allTime = false } = {}) {
+  if (allTime) return 'período completo';
   return `${formatDate(period.from)} a ${formatDate(period.to)}`;
 }
 
+// Linhas da situação do caixa por categoria (acumulado desde o início).
+export function cashflowRows(cashflow) {
+  const categories = [
+    ['Visitas', cashflow.visits],
+    ['Cachaça', cashflow.products],
+    ['Souvenirs', cashflow.souvenirs],
+    ['Fotos', cashflow.photos],
+  ].filter(([, bucket]) => bucket);
+
+  const categorized = categories.reduce((sum, [, b]) => sum + b.payouts, 0);
+  const generalPayouts = Math.max(0, Math.round((cashflow.payouts - categorized) * 100) / 100);
+
+  return { categories, generalPayouts };
+}
+
 // Monta o relatório em texto puro, no formato que fica bom no WhatsApp.
-export function buildReportText(report, selected, { title = 'Garagem do Automóvel' } = {}) {
+export function buildReportText(
+  report,
+  selected,
+  { title = 'Garagem do Automóvel', allTime = false } = {}
+) {
   const on = (key) => isSectionOn(selected, key);
   const lines = [];
   const money = formatCurrency;
 
   lines.push(`*${title}*`);
-  lines.push(`Relatório de ${periodLabel(report.period)}`);
+  lines.push(`Relatório ${allTime ? 'do' : 'de'} ${periodLabel(report.period, { allTime })}`);
 
   if (on('summary')) {
     const s = report.summary;
@@ -64,7 +84,7 @@ export function buildReportText(report, selected, { title = 'Garagem do Automóv
     lines.push(`• Comissão guia: ${money(v.totals.guideCommission)}`);
     lines.push(`• Arrecadação ONG: ${money(v.totals.ownerShare)}`);
     lines.push(
-      `• Pendentes: ${v.counts.pending} · Cancelados: ${v.counts.canceled} · Não compareceram: ${v.counts.noShow}`
+      `• Grupos pendentes: ${v.counts.pending} · cancelados: ${v.counts.canceled} · que não compareceram: ${v.counts.noShow}`
     );
     if (on('visitsList') && v.bookings.length > 0) {
       lines.push('_Visitas do período:_');
@@ -152,14 +172,22 @@ export function buildReportText(report, selected, { title = 'Garagem do Automóv
 
   if (on('cashflow')) {
     const c = report.cashflow;
-    lines.push('', '*Situação do caixa (acumulado)*');
-    lines.push(`• Saldo em caixa: ${money(c.balance)}`);
-    lines.push(`• Pendente de repasse (visitas): ${money(c.visits.pending)}`);
-    lines.push(`• Pendente de repasse (cachaça): ${money(c.products.pending)}`);
-    if (c.souvenirs) lines.push(`• Pendente de repasse (souvenirs): ${money(c.souvenirs.pending)}`);
-    lines.push(`• Pendente de repasse (fotos): ${money(c.photos.pending)}`);
-    lines.push(`• Total repassado: ${money(c.payouts)}`);
+    const { categories, generalPayouts } = cashflowRows(c);
+    lines.push('', '*Situação do caixa (acumulado desde o início)*');
+    for (const [label, b] of categories) {
+      lines.push(
+        `• ${label}: arrecadado ${money(b.accrued)} · repassado ${money(b.payouts)} · pendente ${money(b.pending)}`
+      );
+    }
+    if (generalPayouts > 0) {
+      lines.push(`• Repasses lançados como "Geral" (sem categoria): ${money(generalPayouts)}`);
+    }
+    lines.push(`• Total repassado à ONG: ${money(c.payouts)}`);
     lines.push(`• Total de despesas: ${money(c.expenses)}`);
+    lines.push(`• Saldo em caixa: ${money(c.balance)}`);
+    lines.push(
+      '_Arrecadado = parte da ONG (receita menos comissões). Pendente = arrecadado menos o repassado da categoria e menos a parte proporcional dos repasses gerais._'
+    );
   }
 
   lines.push('', `_Gerado em ${formatDateTime(report.generatedAt)}_`);

@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Wallet, Receipt, HandCoins, Plus, Pencil, Trash2, ScrollText } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
-import { formatCurrency, formatDateTime } from '../lib/format';
+import { formatCurrency, formatDate } from '../lib/format';
 import { ExpenseModal } from '../components/ExpenseModal';
 import { PayoutModal } from '../components/PayoutModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -176,7 +176,7 @@ export default function CashFlow() {
                       {expense.description}
                     </p>
                     <p className="text-text-secondary text-xs">
-                      {formatDateTime(expense.paidAt)}
+                      {formatDate(expense.paidAt)}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -232,7 +232,7 @@ export default function CashFlow() {
                       {payout.notes || 'Repasse à ONG'}
                     </p>
                     <p className="text-text-secondary text-xs">
-                      {formatDateTime(payout.paidAt)} - {PAYOUT_CATEGORY_LABELS[payout.category]}
+                      {formatDate(payout.paidAt)} - {PAYOUT_CATEGORY_LABELS[payout.category]}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">

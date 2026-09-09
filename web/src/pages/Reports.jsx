@@ -15,6 +15,7 @@ import {
   isSectionOn,
   buildReportText,
   periodLabel,
+  cashflowRows,
 } from '../lib/report';
 
 const STORAGE_KEY = 'report-sections';
@@ -101,7 +102,7 @@ function List({ columns, rows, empty = 'Nenhum registro no período.' }) {
   );
 }
 
-function ReportPreview({ report, selected }) {
+function ReportPreview({ report, selected, allTime }) {
   const on = (key) => isSectionOn(selected, key);
   const money = formatCurrency;
   const s = report.summary;
@@ -115,7 +116,9 @@ function ReportPreview({ report, selected }) {
     <div className="print-area bg-surface border border-border rounded-lg p-6 sm:p-8 space-y-6">
       <header>
         <h2 className="font-display text-2xl text-wine">{REPORT_TITLE}</h2>
-        <p className="text-sm text-text-secondary">Relatório de {periodLabel(report.period)}</p>
+        <p className="text-sm text-text-secondary">
+          Relatório {allTime ? 'do' : 'de'} {periodLabel(report.period, { allTime })}
+        </p>
       </header>
 
       {on('summary') && (
@@ -143,10 +146,9 @@ function ReportPreview({ report, selected }) {
               ['Receita', money(v.totals.revenue)],
               ['Comissão guia', money(v.totals.guideCommission)],
               ['Arrecadação ONG', money(v.totals.ownerShare)],
-              [
-                'Pendentes · Cancelados · Não compareceram',
-                `${v.counts.pending} · ${v.counts.canceled} · ${v.counts.noShow}`,
-              ],
+              ['Grupos pendentes', v.counts.pending],
+              ['Grupos cancelados', v.counts.canceled],
+              ['Grupos que não compareceram', v.counts.noShow],
             ]}
           />
           {on('visitsList') && (
@@ -261,18 +263,59 @@ function ReportPreview({ report, selected }) {
       )}
 
       {on('cashflow') && (
-        <Section title="Situação do caixa (acumulado)">
-          <Rows
-            items={[
-              ['Saldo em caixa', money(cf.balance)],
-              ['Pendente de repasse (visitas)', money(cf.visits.pending)],
-              ['Pendente de repasse (cachaça)', money(cf.products.pending)],
-              ...(cf.souvenirs ? [['Pendente de repasse (souvenirs)', money(cf.souvenirs.pending)]] : []),
-              ['Pendente de repasse (fotos)', money(cf.photos.pending)],
-              ['Total repassado', money(cf.payouts)],
-              ['Total de despesas', money(cf.expenses)],
-            ]}
-          />
+        <Section title="Situação do caixa (acumulado desde o início)">
+          {(() => {
+            const { categories, generalPayouts } = cashflowRows(cf);
+            return (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-text-secondary border-b border-border">
+                        <th className="py-1 pr-3 font-medium">Categoria</th>
+                        <th className="py-1 pr-3 font-medium text-right">Arrecadado</th>
+                        <th className="py-1 pr-3 font-medium text-right">Repassado</th>
+                        <th className="py-1 font-medium text-right">Pendente</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categories.map(([label, b]) => (
+                        <tr key={label} className="border-b border-border/60 last:border-0">
+                          <td className="py-1 pr-3 text-text-primary">{label}</td>
+                          <td className="py-1 pr-3 text-text-primary text-right whitespace-nowrap">
+                            {money(b.accrued)}
+                          </td>
+                          <td className="py-1 pr-3 text-text-primary text-right whitespace-nowrap">
+                            {money(b.payouts)}
+                          </td>
+                          <td className="py-1 text-text-primary text-right whitespace-nowrap font-medium">
+                            {money(b.pending)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-3">
+                  <Rows
+                    items={[
+                      ...(generalPayouts > 0
+                        ? [['Repasses lançados como "Geral" (sem categoria)', money(generalPayouts)]]
+                        : []),
+                      ['Total repassado à ONG', money(cf.payouts)],
+                      ['Total de despesas', money(cf.expenses)],
+                      ['Saldo em caixa', money(cf.balance)],
+                    ]}
+                  />
+                </div>
+                <p className="text-xs text-text-secondary mt-3">
+                  Arrecadado é a parte da ONG (receita menos comissões) desde o início do sistema.
+                  Pendente é o arrecadado menos o que já foi repassado naquela categoria e menos a
+                  parte proporcional dos repasses lançados como Geral.
+                </p>
+              </>
+            );
+          })()}
         </Section>
       )}
 
@@ -306,9 +349,11 @@ export default function Reports() {
     },
   });
 
+  const allTime = period === 'allTime';
+
   const text = useMemo(
-    () => (report ? buildReportText(report, selected, { title: REPORT_TITLE }) : ''),
-    [report, selected]
+    () => (report ? buildReportText(report, selected, { title: REPORT_TITLE, allTime }) : ''),
+    [report, selected, allTime]
   );
 
   function toggle(key) {
@@ -436,7 +481,9 @@ export default function Reports() {
               Selecione ao menos uma seção para montar o relatório.
             </p>
           )}
-          {report && !nothingSelected && <ReportPreview report={report} selected={selected} />}
+          {report && !nothingSelected && (
+            <ReportPreview report={report} selected={selected} allTime={allTime} />
+          )}
         </div>
       </div>
     </div>
