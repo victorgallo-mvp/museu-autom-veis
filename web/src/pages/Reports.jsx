@@ -15,7 +15,7 @@ import {
   isSectionOn,
   buildReportText,
   periodLabel,
-  cashflowRows,
+  ongTotals,
 } from '../lib/report';
 
 const STORAGE_KEY = 'report-sections';
@@ -264,58 +264,15 @@ function ReportPreview({ report, selected, allTime }) {
 
       {on('cashflow') && (
         <Section title="Situação do caixa (acumulado desde o início)">
-          {(() => {
-            const { categories, generalPayouts } = cashflowRows(cf);
-            return (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-text-secondary border-b border-border">
-                        <th className="py-1 pr-3 font-medium">Categoria</th>
-                        <th className="py-1 pr-3 font-medium text-right">Arrecadado</th>
-                        <th className="py-1 pr-3 font-medium text-right">Repassado</th>
-                        <th className="py-1 font-medium text-right">Pendente</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categories.map(([label, b]) => (
-                        <tr key={label} className="border-b border-border/60 last:border-0">
-                          <td className="py-1 pr-3 text-text-primary">{label}</td>
-                          <td className="py-1 pr-3 text-text-primary text-right whitespace-nowrap">
-                            {money(b.accrued)}
-                          </td>
-                          <td className="py-1 pr-3 text-text-primary text-right whitespace-nowrap">
-                            {money(b.payouts)}
-                          </td>
-                          <td className="py-1 text-text-primary text-right whitespace-nowrap font-medium">
-                            {money(b.pending)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="mt-3">
-                  <Rows
-                    items={[
-                      ...(generalPayouts > 0
-                        ? [['Repasses lançados como "Geral" (sem categoria)', money(generalPayouts)]]
-                        : []),
-                      ['Total repassado à ONG', money(cf.payouts)],
-                      ['Total de despesas', money(cf.expenses)],
-                      ['Saldo em caixa', money(cf.balance)],
-                    ]}
-                  />
-                </div>
-                <p className="text-xs text-text-secondary mt-3">
-                  Arrecadado é a parte da ONG (receita menos comissões) desde o início do sistema.
-                  Pendente é o arrecadado menos o que já foi repassado naquela categoria e menos a
-                  parte proporcional dos repasses lançados como Geral.
-                </p>
-              </>
-            );
-          })()}
+          <Rows
+            items={[
+              ['Arrecadado para a ONG', money(ongTotals(cf).accrued)],
+              ['Já repassado', money(ongTotals(cf).payouts)],
+              ['Pendente de repasse', money(ongTotals(cf).pending)],
+              ['Despesas', money(cf.expenses)],
+              ['Saldo em caixa', money(cf.balance)],
+            ]}
+          />
         </Section>
       )}
 

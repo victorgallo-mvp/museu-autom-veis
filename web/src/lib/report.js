@@ -35,19 +35,21 @@ export function periodLabel(period, { allTime = false } = {}) {
   return `${formatDate(period.from)} a ${formatDate(period.to)}`;
 }
 
-// Linhas da situação do caixa por categoria (acumulado desde o início).
-export function cashflowRows(cashflow) {
-  const categories = [
-    ['Visitas', cashflow.visits],
-    ['Cachaça', cashflow.products],
-    ['Souvenirs', cashflow.souvenirs],
-    ['Fotos', cashflow.photos],
-  ].filter(([, bucket]) => bucket);
-
-  const categorized = categories.reduce((sum, [, b]) => sum + b.payouts, 0);
-  const generalPayouts = Math.max(0, Math.round((cashflow.payouts - categorized) * 100) / 100);
-
-  return { categories, generalPayouts };
+// Totais consolidados da ONG. Cai num cálculo local se a API ainda não enviar
+// o campo "ong" (deploy do backend em andamento).
+export function ongTotals(cashflow) {
+  if (cashflow.ong) return cashflow.ong;
+  const accrued =
+    cashflow.visits.accrued +
+    cashflow.products.accrued +
+    (cashflow.souvenirs?.accrued ?? 0) +
+    cashflow.photos.accrued;
+  const payouts = cashflow.payouts;
+  return {
+    accrued: Math.round(accrued * 100) / 100,
+    payouts,
+    pending: Math.round((accrued - payouts) * 100) / 100,
+  };
 }
 
 // Monta o relatório em texto puro, no formato que fica bom no WhatsApp.
@@ -172,22 +174,13 @@ export function buildReportText(
 
   if (on('cashflow')) {
     const c = report.cashflow;
-    const { categories, generalPayouts } = cashflowRows(c);
+    const ong = ongTotals(c);
     lines.push('', '*Situação do caixa (acumulado desde o início)*');
-    for (const [label, b] of categories) {
-      lines.push(
-        `• ${label}: arrecadado ${money(b.accrued)} · repassado ${money(b.payouts)} · pendente ${money(b.pending)}`
-      );
-    }
-    if (generalPayouts > 0) {
-      lines.push(`• Repasses lançados como "Geral" (sem categoria): ${money(generalPayouts)}`);
-    }
-    lines.push(`• Total repassado à ONG: ${money(c.payouts)}`);
-    lines.push(`• Total de despesas: ${money(c.expenses)}`);
+    lines.push(`• Arrecadado para a ONG: ${money(ong.accrued)}`);
+    lines.push(`• Já repassado: ${money(ong.payouts)}`);
+    lines.push(`• Pendente de repasse: ${money(ong.pending)}`);
+    lines.push(`• Despesas: ${money(c.expenses)}`);
     lines.push(`• Saldo em caixa: ${money(c.balance)}`);
-    lines.push(
-      '_Arrecadado = parte da ONG (receita menos comissões). Pendente = arrecadado menos o repassado da categoria e menos a parte proporcional dos repasses gerais._'
-    );
   }
 
   lines.push('', `_Gerado em ${formatDateTime(report.generatedAt)}_`);

@@ -88,6 +88,14 @@ async function getSummary() {
 
   const balance = round2(accruedSum - expensesTotal - payoutsTotal);
 
+  // Visão consolidada, sem rateio por categoria: o museu repassa um valor
+  // único à ONG, então o que importa é arrecadado, repassado e a diferença.
+  const ong = {
+    accrued: round2(accruedSum),
+    payouts: payoutsTotal,
+    pending: round2(accruedSum - payoutsTotal),
+  };
+
   const [recentExpenses, recentPayouts] = await Promise.all([
     prisma.expense.findMany({ orderBy: { paidAt: 'desc' }, take: RECENT_LIMIT }),
     prisma.payout.findMany({ orderBy: { paidAt: 'desc' }, take: RECENT_LIMIT }),
@@ -95,6 +103,7 @@ async function getSummary() {
 
   return {
     totals: {
+      ong,
       visits: { accrued: visitsAccrued, payouts: visitsPayouts, pending: pendingVisits },
       products: { accrued: productsAccrued, payouts: productsPayouts, pending: pendingProducts },
       souvenirs: {

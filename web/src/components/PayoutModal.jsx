@@ -17,9 +17,11 @@ const EMPTY_FORM = { category: 'GENERAL', amount: '', paidAt: '', notes: '' };
 
 export function PayoutModal({ open, payout, onClose, onSubmit, submitting }) {
   const [form, setForm] = useState(EMPTY_FORM);
+  const [showCategory, setShowCategory] = useState(false);
 
   useEffect(() => {
     if (open) {
+      setShowCategory(Boolean(payout && payout.category !== 'GENERAL'));
       setForm(
         payout
           ? {
@@ -55,20 +57,6 @@ export function PayoutModal({ open, payout, onClose, onSubmit, submitting }) {
           {payout ? 'Editar repasse' : 'Novo repasse à ONG'}
         </h2>
 
-        <Field label="Categoria">
-          <select
-            value={form.category}
-            onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-            className={inputClass}
-          >
-            {PAYOUT_CATEGORY_OPTIONS.map((value) => (
-              <option key={value} value={value}>
-                {PAYOUT_CATEGORY_LABELS[value]}
-              </option>
-            ))}
-          </select>
-        </Field>
-
         <Field label="Valor (R$)">
           <input
             required
@@ -99,6 +87,30 @@ export function PayoutModal({ open, payout, onClose, onSubmit, submitting }) {
             className={inputClass}
           />
         </Field>
+
+        {showCategory ? (
+          <Field label="Categoria (opcional, só para filtrar o histórico)">
+            <select
+              value={form.category}
+              onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+              className={inputClass}
+            >
+              {PAYOUT_CATEGORY_OPTIONS.map((value) => (
+                <option key={value} value={value}>
+                  {PAYOUT_CATEGORY_LABELS[value]}
+                </option>
+              ))}
+            </select>
+          </Field>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowCategory(true)}
+            className="text-xs text-text-secondary hover:text-text-primary underline"
+          >
+            Classificar por origem (opcional)
+          </button>
+        )}
 
         <div className="flex justify-end gap-3 pt-2">
           <button
