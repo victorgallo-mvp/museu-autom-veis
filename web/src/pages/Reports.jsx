@@ -267,10 +267,9 @@ function ReportPreview({ report, selected, allTime }) {
           <Rows
             items={[
               ['Arrecadado para a ONG', money(ongTotals(cf).accrued)],
+              ['Despesas pagas pelo caixa', money(ongTotals(cf).expenses)],
               ['Já repassado', money(ongTotals(cf).payouts)],
-              ['Pendente de repasse', money(ongTotals(cf).pending)],
-              ['Despesas', money(cf.expenses)],
-              ['Saldo em caixa', money(cf.balance)],
+              ['Pendente de repasse (saldo em caixa)', money(ongTotals(cf).pending)],
             ]}
           />
         </Section>

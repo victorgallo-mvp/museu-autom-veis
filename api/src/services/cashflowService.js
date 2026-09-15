@@ -89,11 +89,14 @@ async function getSummary() {
   const balance = round2(accruedSum - expensesTotal - payoutsTotal);
 
   // Visão consolidada, sem rateio por categoria: o museu repassa um valor
-  // único à ONG, então o que importa é arrecadado, repassado e a diferença.
+  // único à ONG. As despesas saem do caixa antes do repasse, então o que
+  // ainda falta repassar é o arrecadado menos despesas menos o já repassado
+  // (o mesmo que o saldo em caixa).
   const ong = {
     accrued: round2(accruedSum),
+    expenses: expensesTotal,
     payouts: payoutsTotal,
-    pending: round2(accruedSum - payoutsTotal),
+    pending: balance,
   };
 
   const [recentExpenses, recentPayouts] = await Promise.all([

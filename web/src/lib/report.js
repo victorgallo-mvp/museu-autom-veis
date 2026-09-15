@@ -45,10 +45,12 @@ export function ongTotals(cashflow) {
     (cashflow.souvenirs?.accrued ?? 0) +
     cashflow.photos.accrued;
   const payouts = cashflow.payouts;
+  const expenses = cashflow.expenses;
   return {
     accrued: Math.round(accrued * 100) / 100,
+    expenses,
     payouts,
-    pending: Math.round((accrued - payouts) * 100) / 100,
+    pending: Math.round((accrued - expenses - payouts) * 100) / 100,
   };
 }
 
@@ -177,10 +179,9 @@ export function buildReportText(
     const ong = ongTotals(c);
     lines.push('', '*Situação do caixa (acumulado desde o início)*');
     lines.push(`• Arrecadado para a ONG: ${money(ong.accrued)}`);
+    lines.push(`• Despesas pagas pelo caixa: ${money(ong.expenses)}`);
     lines.push(`• Já repassado: ${money(ong.payouts)}`);
-    lines.push(`• Pendente de repasse: ${money(ong.pending)}`);
-    lines.push(`• Despesas: ${money(c.expenses)}`);
-    lines.push(`• Saldo em caixa: ${money(c.balance)}`);
+    lines.push(`• Pendente de repasse (saldo em caixa): ${money(ong.pending)}`);
   }
 
   lines.push('', `_Gerado em ${formatDateTime(report.generatedAt)}_`);

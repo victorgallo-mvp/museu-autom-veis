@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Wallet, Receipt, HandCoins, Landmark, Clock3, Plus, Pencil, Trash2, ScrollText } from 'lucide-react';
+import { Wallet, Receipt, HandCoins, Landmark, Plus, Pencil, Trash2, ScrollText } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
 import { formatCurrency, formatDate } from '../lib/format';
@@ -131,37 +131,28 @@ export default function CashFlow() {
       {loadingSummary ? (
         <p className="text-text-secondary mb-8">Carregando...</p>
       ) : (
-        <div className="space-y-4 mb-8">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard
-              icon={Landmark}
-              label="Arrecadado para a ONG"
-              value={formatCurrency(ongTotals(summary.totals).accrued)}
-            />
-            <StatCard
-              icon={HandCoins}
-              label="Já repassado"
-              value={formatCurrency(ongTotals(summary.totals).payouts)}
-            />
-            <StatCard
-              icon={Clock3}
-              label="Pendente de repasse"
-              value={formatCurrency(ongTotals(summary.totals).pending)}
-              highlight
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <StatCard
-              icon={Wallet}
-              label="Saldo em caixa"
-              value={formatCurrency(summary.totals.balance)}
-            />
-            <StatCard
-              icon={Receipt}
-              label="Despesas"
-              value={formatCurrency(summary.totals.expenses)}
-            />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard
+            icon={Landmark}
+            label="Arrecadado para a ONG"
+            value={formatCurrency(ongTotals(summary.totals).accrued)}
+          />
+          <StatCard
+            icon={Receipt}
+            label="Despesas pagas pelo caixa"
+            value={formatCurrency(ongTotals(summary.totals).expenses)}
+          />
+          <StatCard
+            icon={HandCoins}
+            label="Já repassado"
+            value={formatCurrency(ongTotals(summary.totals).payouts)}
+          />
+          <StatCard
+            icon={Wallet}
+            label="Pendente de repasse (saldo em caixa)"
+            value={formatCurrency(ongTotals(summary.totals).pending)}
+            highlight
+          />
         </div>
       )}
 
